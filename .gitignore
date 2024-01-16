@@ -1,0 +1,12 @@
+# 特定文件
+.DS_Store
+
+# 特定后缀
+*.log
+*.csv
+*.db
+
+# 特征目录
+.venv/
+notebooks/
+__pycache__/
