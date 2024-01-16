@@ -100,14 +100,18 @@ def run_back_test():
 
 
 if __name__ == "__main__":
-    # 运行回测
+    # 回测
     print("Starting BackTesting...")
     run_back_test()
 
-    # 实盘模拟
+    # # 滚动回测
+    # print("Starting Rolling BackTest...")
+    # run_rolling_back_test()
+
+    # 模拟
     # print("Starting LiveMocking...")
     # run_live_mock()
 
-    # 实盘交易
+    # 实盘
     # print("Starting LiveTrading...")
     # run_live_trading()
