@@ -1,6 +1,6 @@
 # Import necessary libraries
 import backtrader as bt
-from .simple_base_strategy import BaseStrategy
+from ..base_strategy import BaseStrategy
 
 
 class BollingerBandStrategy(BaseStrategy):

@@ -1,0 +1,7 @@
+# database_config.py
+
+MYSQL_USERNAME = "root"
+MYSQL_PASSWORD = "ml123456"
+MYSQL_HOST = "127.0.0.1"
+MYSQL_PORT = 3306
+MYSQL_DATABASE = "hh_quant"

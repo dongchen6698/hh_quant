@@ -12,8 +12,8 @@
 > * Tensorflow｜Sklearn：机器学习 & 深度学习工具
 > * Pandas & Numpy：数据分析处理工具
 > * matplotlib：数据可视化工具
-> * sqlite：本地数据库
 > * backtrader: 量化回测框架
+> * quantstats: 衡量策略绩效指标的python lib库，用于投资组合分析
 > * 指标计算工具: pandas_ta, Ta-Lib(查看安装教程)
     * ta-lib安装：
         * 首先通过：brew install ta-lib, 然后再运行：pip install ta-lib
