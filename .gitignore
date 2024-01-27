@@ -5,8 +5,9 @@
 *.log
 *.csv
 *.db
+*.pkl
 
 # 特征目录
 .venv/
-notebooks/
+# notebooks/
 __pycache__/

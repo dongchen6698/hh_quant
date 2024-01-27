@@ -1,5 +1,6 @@
 import sys
-from config import global_config, backtest_config
+from backtest import backtest_config
+from config import global_config
 from strategies.simple_strategies.moving_average_strategy import MovingAverageStrategy
 from backtest.backtest_engine import BacktestEngine
 

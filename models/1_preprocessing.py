@@ -8,7 +8,7 @@ class Preprocessing:
         self.db_conn = db_conn
         self.start_date = datetime.strftime(datetime.strptime(start_date, "%Y%m%d"), "%Y-%m-%d")
         self.end_date = datetime.strftime(datetime.strptime(end_date, "%Y%m%d"), "%Y-%m-%d")
-        # 初始化回测窗口
+        # 根据max_lookback_window计算出lookback_start_date
         self.lookback_start_date = datetime.strftime(datetime.strptime(start_date, "%Y%m%d") - timedelta(days=max_lookback_window), "%Y-%m-%d")
         print(f"new_start_date:: {self.lookback_start_date}")
 
@@ -17,6 +17,8 @@ class Preprocessing:
         self.stock_history_df = pd.read_sql(
             f"SELECT * FROM {table_name} WHERE datetime BETWEEN '{self.lookback_start_date}' AND '{self.end_date}'", self.db_conn
         )
+
+    # 抽取其他类型的特征数据
 
     def _build_stock_label_data(self):
         """
@@ -45,6 +47,7 @@ class Preprocessing:
 
     def _merge_label_and_feature(self):
         self.preprocessing_result = self.stock_label_df.merge(self.stock_history_df, on=["stock_code", "datetime"], how="left")
+        # 还需要merge其他类型的特征数据
         # 插入数据库
         self.preprocessing_result.to_sql("hh_quant_stock_preprocessing_result_info", self.db_conn, if_exists="replace", index=False)
 
@@ -57,5 +60,5 @@ class Preprocessing:
 
 if __name__ == "__main__":
     db_conn = sqlite3.connect("database/hh_quant.db")
-    preprocessing = Preprocessing(db_conn=db_conn, start_date="20000101", end_date="20050101")
+    preprocessing = Preprocessing(db_conn=db_conn, start_date="20050101", end_date="20100101", max_lookback_window=180)
     preprocessing.start()
