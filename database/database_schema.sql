@@ -7,6 +7,12 @@ CREATE TABLE "hh_quant_stock_base_info" (
   , stock_name TEXT
 );
 
+CREATE TABLE "hh_quant_stock_index_info" (
+    index_code TEXT NOT NULL PRIMARY KEY
+  , index_name TEXT
+  , publish_date DATE
+);
+
 CREATE TABLE "hh_quant_stock_history_info" (
     stock_code TEXT NOT NULL
   , stock_name TEXT

@@ -1,8 +1,12 @@
+# 搭建相关的环境
 参考：https://docs.streamlit.io/get-started/installation/command-line
 创建虚拟环境：python3.10 -m venv .venv
 激活虚拟环境：source .venv/bin/activate
 安装相关依赖：pip install xxxx
 退出虚拟环境：deactivate
+
+
+
 
 # 相关工具包：
 > * Python
@@ -17,3 +21,6 @@
 > * 指标计算工具: pandas_ta, Ta-Lib(查看安装教程)
     * ta-lib安装：
         * 首先通过：brew install ta-lib, 然后再运行：pip install ta-lib
+> * pyfolio: quantopian的可视化分析工具
+> * beekeeper: 本地数据库工具（免费）
+    * https://github.com/beekeeper-studio/beekeeper-studio
