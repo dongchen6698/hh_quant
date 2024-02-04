@@ -1,14 +1,14 @@
-# 搭建相关的环境
-参考：https://docs.streamlit.io/get-started/installation/command-line
-创建虚拟环境：python3.10 -m venv .venv
+# 1. 环境配置（pyenv or conda）
+* 安装pyenv版本管理工具
+* 通过pyenv安装相应python版本
+
+# 2. 搭建相关的环境
+创建虚拟环境：python3.8 -m venv .venv
 激活虚拟环境：source .venv/bin/activate
 安装相关依赖：pip install xxxx
 退出虚拟环境：deactivate
 
-
-
-
-# 相关工具包：
+# 3. 相关工具包：
 > * Python
 > * Vscode：变成开发工具IDE
 > * AkShare｜Tushare：用来获取股票数据和推送钉钉消息

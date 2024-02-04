@@ -9,9 +9,6 @@ from strategies.simple_strategies.moving_average_strategy import MovingAverageSt
 from utils.data_loader import load_data, load_candidates
 from utils.data_saver import save_backtest_result
 
-from backtrader_plotting import Bokeh
-from backtrader_plotting.schemes import Tradimo
-
 
 def run_back_test():
     # 设置回测基础参数
