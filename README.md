@@ -8,7 +8,7 @@
 安装相关依赖：pip install xxxx
 退出虚拟环境：deactivate
 
-# 3. 相关工具包：
+# 3. 相关工具包介绍：
 > * Python
 > * Vscode：变成开发工具IDE
 > * AkShare｜Tushare：用来获取股票数据和推送钉钉消息
@@ -24,3 +24,8 @@
 > * pyfolio: quantopian的可视化分析工具
 > * beekeeper: 本地数据库工具（免费）
     * https://github.com/beekeeper-studio/beekeeper-studio
+
+# 4. 回测流程
+> * 1. cd backtest # 进入回测目录
+> * 2. cd backtest_data & python download_backtest_data.py # 下载回测数据 & 基准数据
+> * 3. python backtest_engine.py # 启动回测

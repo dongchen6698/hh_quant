@@ -1,69 +1,118 @@
 # backtest/backtest_engine.py
 
+import sys
+
+# 配置搜索路径
+sys.path.append("./")
+sys.path.append("../")
 import backtrader as bt
-from utils.data_loader import load_backtest_data
-import backtest_config as backtest_config
-from ..strategies.simple_strategies.moving_average_strategy import MovingAverageCrossStrategy
+import pandas as pd
+import pprint
+from datetime import datetime
+from strategies import MovingAverageCrossStrategy
+from backtest_utils import CustomCommissionSchema, CustomAnalyzer
+
+
+BACKTEST_INITIAL_CASH = 100000  # 初始化资金
+BACKTEST_SIZER = 100  # 设定每笔交易100股
+BACKTEST_SLIPPAGE_TYPE = "perc"  # 初始化双边滑点类型
+BACKTEST_SLIPPAGE_VALUE = 0.0001  # 初始化双边滑点0.0001
+BACKTEST_START_DATE = "20150101"  # 回测开始日期
+BACKTEST_END_DATE = "20200101"  # 回测结束日期
+BACKTEST_INDEX_SYMBOLS = "000300"  # 沪深300 基准
+BACKTEST_STOCK_SYMBOLS = ["600519"]  # 回测股票代码
+
+INDEX_DATA_DIR = "./backtest_data/index_data"
+STOCK_DATA_DIR = "./backtest_data/stock_data"
 
 
 class BacktestEngine:
     def __init__(self):
         self.cerebro = bt.Cerebro()  # 初始化 Cerebro 引擎
 
-    def run_init_config(self, backtest_config):
-        print("设置回测基础参数...")
-        self.cerebro.broker.setcash(backtest_config.BACKTEST_INITIAL_CASH)
-        self.cerebro.broker.setcommission(commission=backtest_config.BACKTEST_COMMISSION)
-        if backtest_config.BACKTEST_SLIPPAGE_TYPE == "fix":  # 每笔交易滑点为固定值
-            self.cerebro.broker.set_slippage_fixed(backtest_config.BACKTEST_SLIPPAGE_VALUE)
-        elif backtest_config.BACKTEST_SLIPPAGE_TYPE == "perc":  # 每笔交易滑点为百分比
-            self.cerebro.broker.set_slippage_perc(backtest_config.BACKTEST_SLIPPAGE_VALUE)
-        self.cerebro.addsizer(bt.sizers.FixedSize, stake=backtest_config.BACKTEST_SIZER)
+    def _load_backtest_data(self, data_path):
+        # 读取原始数据
+        df = pd.read_pickle(data_path).iloc[:, :6]
+        # 设置数据index
+        df["datetime"] = pd.to_datetime(df["datetime"])
+        df.set_index("datetime", inplace=True)
+        # 配置日期格式
+        fmt_start_date = datetime.strptime(BACKTEST_START_DATE, "%Y%m%d")
+        fmt_end_date = datetime.strptime(BACKTEST_END_DATE, "%Y%m%d")
+        # 过滤期间数据
+        df = df[(df.index >= fmt_start_date) & (df.index <= fmt_end_date)]
+        return df
 
-    def run_init_analyzer(self):
-        print("开始添加分析器...")
-        self.cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="pnl")  # 盈亏分析器
-        self.cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="annual_return")  # 年化收益分析器
-        self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")  # 普比率分析器
-        self.cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")  # 最大回撤分析器
-        self.cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")  # 收益分析器
+    def run_init_config(self):
+        print("开始设置回测基础参数...")
+        self.cerebro.broker.setcash(BACKTEST_INITIAL_CASH)
+        self.cerebro.broker.addcommissioninfo(CustomCommissionSchema())  # 配置自定义的佣金类型
+        if BACKTEST_SLIPPAGE_TYPE == "fix":  # 每笔交易滑点为固定值
+            self.cerebro.broker.set_slippage_fixed(BACKTEST_SLIPPAGE_VALUE)
+        elif BACKTEST_SLIPPAGE_TYPE == "perc":  # 每笔交易滑点为百分比
+            self.cerebro.broker.set_slippage_perc(BACKTEST_SLIPPAGE_VALUE)
+        self.cerebro.addsizer(bt.sizers.FixedSize, stake=BACKTEST_SIZER)
+
+    def run_init_stock_data(self):
+        print("开始添加回测股票数据...")
+        for stock_symbol in BACKTEST_STOCK_SYMBOLS:
+            stock_data = self._load_backtest_data(f"{STOCK_DATA_DIR}/{stock_symbol}.pkl")
+            stock_data_feeds = bt.feeds.PandasData(dataname=stock_data)  # 添加回测数据
+            self.cerebro.adddata(stock_data_feeds, name=stock_symbol)
+
+    def run_init_benchmark_data(self):
+        print("开始添加基准数据...")
+        benchmark_data = self._load_backtest_data(f"{INDEX_DATA_DIR}/{BACKTEST_INDEX_SYMBOLS}.pkl")
+        self.benchmark_data_feeds = bt.feeds.PandasData(dataname=benchmark_data, plot=False)  # 添加基准大盘数据
+        self.benchmark_name = f"benchmark_{BACKTEST_INDEX_SYMBOLS}"
+        self.cerebro.adddata(self.benchmark_data_feeds, name=self.benchmark_name)
 
     def run_init_strategy(self, strategy):
         print("开始添加策略...")
-        self.cerebro.addstrategy(strategy)
+        self.cerebro.addstrategy(strategy, benchmark=self.benchmark_name)
 
-    def run_init_data(self, symbols=[]):
-        # 将数据添加到 Cerebro
+    def run_init_analyzer(self):
+        print("开始添加分析器...")
+        self.cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")  # 添加最大回撤的分析器，后续customAnalyzer中需要用到
+        self.cerebro.addanalyzer(CustomAnalyzer, _name="custom_analyzer")  # 添加自定义的分析器
 
-        for stock_name, stock_data in data_dict.items():
-            self.cerebro.adddata(stock_data, name=stock_name)
+    def run_init_observer(self):
+        print("开始添加观察器...")
+        self.cerebro.addobserver(bt.observers.Benchmark, data=self.benchmark_data_feeds, timeframe=bt.TimeFrame.NoTimeFrame)  # 添加基准对比观察器
 
     def run_backtest(self):
+        print("开始运行回测...")
         # 运行回测
         self.results = self.cerebro.run()
         # 打印初始资金
-        print(f"Start Portfolio Value: {self.cerebro.broker.getvalue()}")
+        print(f"Start Portfolio Value: {BACKTEST_INITIAL_CASH}")
         # 打印最终资金
         print(f"Final Portfolio Value: {self.cerebro.broker.getvalue()}")
 
-    def evaluate_performance(self):
-        # 提取分析器结果
-        sharpe_ratio = self.results[0].analyzers.sharpe_ratio.get_analysis()
-        drawdown_info = self.results[0].analyzers.drawdown.get_analysis()
-        returns_info = self.results[0].analyzers.returns.get_analysis()
-
-        # 打印性能指标
-        print(f'Sharpe Ratio: {sharpe_ratio["sharperatio"]}')
-        print(f'Max Drawdown: {drawdown_info["max"]["drawdown"]}')
-        print(f'Annual Return: {returns_info["rnorm100"]}')
-
+    def run_evaluate_performance(self, plot=False):
+        custom_analysis = self.results[0].analyzers.custom_analyzer.get_analysis()
+        print("Start Print Analysis Result .................")
+        pprint.pprint(custom_analysis, depth=1)
         # 可以在这里进行更详细的性能评估和可视化
+        if plot:
+            self.cerebro.plot()
 
 
 if __name__ == "__main__":
+    # 初始化回测引擎
     backtest_engine = BacktestEngine()
-    backtest_engine.run_init_config(backtest_config)  # 配置基础参数
-    backtest_engine.run_init_analyzer()  # 配置分析器
-    backtest_engine.run_init_strategy(MovingAverageCrossStrategy)  # 配置策略
-    backtest_engine.run_init_data(symbols=[])  # 配置数据
+    # 配置基础参数
+    backtest_engine.run_init_config()
+    # 配置数据
+    backtest_engine.run_init_stock_data()  # 配置回测数据
+    backtest_engine.run_init_benchmark_data()  # 配置基准数据
+    # 配置策略
+    backtest_engine.run_init_strategy(MovingAverageCrossStrategy)
+    # 配置分析器
+    backtest_engine.run_init_analyzer()
+    # 配置benchmark
+    backtest_engine.run_init_observer()
+    # 启动回测
     backtest_engine.run_backtest()
+    # 打印性能指标
+    backtest_engine.run_evaluate_performance(plot=False)
