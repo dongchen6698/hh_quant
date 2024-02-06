@@ -1,16 +1,25 @@
 import backtrader as bt
+from risk_management import RiskManager
 
 
 class BaseStrategy(bt.Strategy):
     params = {
         "log_file": None,
         "benchmark": None,
+        "risk_manage": False,
     }
 
     def __init__(self):
+        # 初始化数据 & 基准
         if self.params.benchmark is not None:
+            print("启动基准对比...")
             self.benchmark = self.getdatabyname(self.params.benchmark)
             self.datas = [data for data in self.datas if data is not self.benchmark]
+
+        # 初始化风险管理
+        if self.params.risk_manage:
+            print("启动风险控制...")
+            self.risk_manager = RiskManager(self)
 
         # 使用字典跟踪每个数据源的订单、买入价格和佣金
         self.orders = {data: None for data in self.datas}

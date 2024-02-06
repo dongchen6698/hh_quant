@@ -25,6 +25,8 @@ BACKTEST_STOCK_SYMBOLS = ["600519"]  # 回测股票代码
 INDEX_DATA_DIR = "./backtest_data/index_data"
 STOCK_DATA_DIR = "./backtest_data/stock_data"
 
+APPLY_RISK_MANAGE = False
+
 
 class BacktestEngine:
     def __init__(self):
@@ -69,7 +71,7 @@ class BacktestEngine:
 
     def run_init_strategy(self, strategy):
         print("开始添加策略...")
-        self.cerebro.addstrategy(strategy, benchmark=self.benchmark_name)
+        self.cerebro.addstrategy(strategy, benchmark=self.benchmark_name, risk_manage=APPLY_RISK_MANAGE)
 
     def run_init_analyzer(self):
         print("开始添加分析器...")
