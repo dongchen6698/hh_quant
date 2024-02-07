@@ -7,10 +7,28 @@ CREATE TABLE "hh_quant_stock_base_info" (
   , stock_name TEXT
 );
 
-CREATE TABLE "hh_quant_stock_index_info" (
+CREATE TABLE "hh_quant_index_base_info" (
     index_code TEXT NOT NULL PRIMARY KEY
   , index_name TEXT
   , publish_date DATE
+);
+
+CREATE TABLE "hh_quant_index_history_info" (
+    index_code TEXT NOT NULL
+  , index_name TEXT
+  , index_publish_date DATE
+  , datetime DATE NOT NULL
+  , open REAL
+  , close REAL
+  , high REAL
+  , low REAL
+  , volume INTEGER
+  , turnover REAL
+  , amplitude REAL
+  , change_pct REAL
+  , change_amount REAL
+  , turnover_rate REAL
+  , PRIMARY KEY(index_code, datetime)
 );
 
 CREATE TABLE "hh_quant_stock_history_info" (

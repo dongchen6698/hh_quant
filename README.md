@@ -24,6 +24,7 @@
 > * pyfolio: quantopian的可视化分析工具
 > * beekeeper: 本地数据库工具（免费）
     * https://github.com/beekeeper-studio/beekeeper-studio
+> * Crontab: linux Crontab 定时任务
 
 # 4. 回测流程
 > * 1. cd backtest # 进入回测目录
