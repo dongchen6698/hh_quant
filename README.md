@@ -3,7 +3,7 @@
 * 通过pyenv安装相应python版本
 
 # 2. 搭建相关的环境
-创建虚拟环境：python3.8 -m venv .venv
+创建虚拟环境：python -m venv .venv
 激活虚拟环境：source .venv/bin/activate
 安装相关依赖：pip install xxxx
 退出虚拟环境：deactivate
