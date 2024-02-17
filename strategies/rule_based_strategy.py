@@ -34,16 +34,54 @@ class MovingAverageCrossStrategy(BaseStrategy):
             if not data_position:
                 # 如果快速MA穿越慢速MA向上，买入信号
                 if self.crossover[data] > 0:
-                    # self.log(f"BUY CREATE {data._name}, {data.close[0]}")
                     self.orders[data] = self.buy(data=data)
             else:
                 # 如果快速MA穿越慢速MA向下，卖出信号
                 if self.crossover[data] < 0:
-                    # self.log(f"SELL CREATE {data._name}, {data.close[0]}")
                     self.orders[data] = self.sell(data=data)
 
-            if self.params.risk_manage:
-                # 风险管理检查
-                self.risk_manager.check_stop_loss(data, stop_loss_percent=20)
-                self.risk_manager.check_take_profit(data, take_profit_percent=10)
-                self.risk_manager.check_max_holding_period(data, max_holding_period=10)
+
+class MACDStrategy(BaseStrategy):
+    params = (
+        ("macd1", 12),  # 快速EMA周期
+        ("macd2", 26),  # 慢速EMA周期
+        ("signal", 9),  # 信号线EMA周期
+    )
+
+    def __init__(self):
+        super().__init__()  # 调用基础策略的初始化方法
+
+        # 为每只股票创建MACD和交叉信号的字典
+        self.macd = dict()
+        self.signal = dict()
+        self.crossover = dict()
+
+        # 初始化MACD指标和交叉信号字典
+        for data in self.datas:
+            self.macd[data] = bt.indicators.MACD(
+                data,
+                period_me1=self.params.macd1,
+                period_me2=self.params.macd2,
+                period_signal=self.params.signal,
+            )
+            self.crossover[data] = bt.indicators.CrossOver(
+                self.macd[data].macd,
+                self.macd[data].signal,
+            )
+
+    def next(self):
+        for data in self.datas:
+            # 检查是否有挂起的订单
+            if self.orders[data]:
+                continue
+
+            # 检查是否持有当前股票
+            data_position = self.getposition(data).size
+            if not data_position:
+                # 如果MACD线穿越信号线向上，买入信号
+                if self.crossover[data] > 0:
+                    self.orders[data] = self.buy(data=data)
+            else:
+                # 如果MACD线穿越信号线向下，卖出信号
+                if self.crossover[data] < 0:
+                    self.orders[data] = self.sell(data=data)

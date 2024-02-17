@@ -9,20 +9,23 @@ import backtrader as bt
 import pandas as pd
 import pprint
 from datetime import datetime
-from strategies import MovingAverageCrossStrategy
+from strategies import MovingAverageCrossStrategy, MACDStrategy
 from backtest_utils import CustomCommissionSchema, CustomAnalyzer
 
+from backtrader_plotting import Bokeh
+from backtrader_plotting.schemes import Tradimo
 
-BACKTEST_INITIAL_CASH = 100000  # 初始化资金
+
+BACKTEST_INITIAL_CASH = 1000000  # 初始化资金
 BACKTEST_SIZER = 100  # 设定每笔交易100股
 BACKTEST_SLIPPAGE_TYPE = "perc"  # 初始化双边滑点类型
 BACKTEST_SLIPPAGE_VALUE = 0.0001  # 初始化双边滑点0.0001
 BACKTEST_START_DATE = "20150101"  # 回测开始日期
 BACKTEST_END_DATE = "20200101"  # 回测结束日期
-BACKTEST_INDEX_SYMBOLS = "600519"  # 沪深300(000300) 基准
-BACKTEST_STOCK_SYMBOLS = ["600519"]  # 回测股票代码（贵州茅台）
+BACKTEST_INDEX_SYMBOLS = "600011"
+BACKTEST_STOCK_SYMBOLS = ["600011"]
 
-INDEX_DATA_DIR = "./backtest_data/index_data"
+INDEX_DATA_DIR = "./backtest_data/stock_data"
 STOCK_DATA_DIR = "./backtest_data/stock_data"
 
 APPLY_RISK_MANAGE = False
@@ -64,8 +67,8 @@ class BacktestEngine:
 
     def run_init_benchmark_data(self):
         print("开始添加基准数据...")
-        benchmark_data = self._load_backtest_data(f"{INDEX_DATA_DIR}/{BACKTEST_INDEX_SYMBOLS}.pkl")
-        self.benchmark_data_feeds = bt.feeds.PandasData(dataname=benchmark_data, plot=False)  # 添加基准大盘数据
+        benchmark_data = self._load_backtest_data(f"{STOCK_DATA_DIR}/{BACKTEST_INDEX_SYMBOLS}.pkl")
+        self.benchmark_data_feeds = bt.feeds.PandasData(dataname=benchmark_data)  # 添加基准数据
         self.benchmark_name = f"benchmark_{BACKTEST_INDEX_SYMBOLS}"
         self.cerebro.adddata(self.benchmark_data_feeds, name=self.benchmark_name)
 
@@ -94,10 +97,21 @@ class BacktestEngine:
     def run_evaluate_performance(self, plot=False):
         custom_analysis = self.results[0].analyzers.custom_analyzer.get_analysis()
         print("Start Print Analysis Result .................")
-        pprint.pprint(custom_analysis, depth=1)
+        format_analysis_result = {"基准": {}, "策略": {}, "其他": {}}
+        for key, value in custom_analysis.items():
+            if key.startswith("基准"):
+                format_analysis_result["基准"][key] = round(value, 4)
+            elif key.startswith("策略"):
+                format_analysis_result["策略"][key] = round(value, 4)
+            else:
+                format_analysis_result["其他"][key] = round(value, 4)
+        pprint.pprint(format_analysis_result)
         # 可以在这里进行更详细的性能评估和可视化
         if plot:
             self.cerebro.plot()
+
+            # b = Bokeh(style="bar", plot_mode="single", scheme=Tradimo())
+            # self.cerebro.plot(b)
 
 
 if __name__ == "__main__":
@@ -109,7 +123,7 @@ if __name__ == "__main__":
     backtest_engine.run_init_stock_data()  # 配置回测数据
     backtest_engine.run_init_benchmark_data()  # 配置基准数据
     # 配置策略
-    backtest_engine.run_init_strategy(MovingAverageCrossStrategy)
+    backtest_engine.run_init_strategy(MACDStrategy)
     # 配置分析器
     backtest_engine.run_init_analyzer()
     # 配置benchmark

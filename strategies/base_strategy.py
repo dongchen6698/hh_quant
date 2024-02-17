@@ -13,8 +13,8 @@ class BaseStrategy(bt.Strategy):
         # 初始化数据 & 基准
         if self.params.benchmark is not None:
             print("启动基准对比...")
-            self.benchmark = self.getdatabyname(self.params.benchmark)
-            self.datas = [data for data in self.datas if data is not self.benchmark]
+            self.benchmark = self.getdatabyname(self.params.benchmark)  # 选择基准数据
+            self.datas = [data for data in self.datas if data._name != self.params.benchmark]  # 过滤基准数据
 
         # 初始化风险管理
         if self.params.risk_manage:

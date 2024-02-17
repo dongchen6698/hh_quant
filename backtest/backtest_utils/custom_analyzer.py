@@ -67,6 +67,7 @@ class CustomAnalyzer(bt.Analyzer):
         self.calculate_strategy_returns()  # 计算策略整体收益
         self.calculate_annualized_returns()  # 计算策略年化收益
         self.calculate_benchmark_returns()  # 计算基准收益
+        self.calculate_benchmark_annualized_returns()  # 计算基准年化收益
         self.calculate_excess_returns()  # 计算策略相对于基准的超额收益
         self.calculate_beta_alpha()  # 计算贝塔系数和阿尔法值，评估策略相对于市场的风险和表现
         self.calculate_win_ratio()  # 计算策略的胜率，即盈利交易占比
@@ -106,6 +107,17 @@ class CustomAnalyzer(bt.Analyzer):
             self.rets["基准收益"] = self.benchmark_curve[-1] / self.benchmark_curve[0] - 1
         else:
             self.rets["基准收益"] = 0
+
+    def calculate_benchmark_annualized_returns(self):
+        """计算基准年化收益
+        基准年化收益 = ((基准收益 + 1) ^ (252 / 交易天数)) - 1
+        假设一年有252个交易日，计算基准如果持续一年所能获得的预期收益率。
+        """
+        days = len(self.benchmark_curve)
+        if days > 0:
+            self.rets["基准年化收益"] = (self.rets["基准收益"] + 1) ** (252 / days) - 1
+        else:
+            self.rets["基准年化收益"] = 0
 
     def calculate_excess_returns(self):
         """计算超额收益

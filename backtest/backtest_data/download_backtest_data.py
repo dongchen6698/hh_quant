@@ -71,7 +71,7 @@ if __name__ == "__main__":
         * 贵州茅台(600519)
     """
     ADJUST_TYPE = "hfq"  # ""：不复权, "qfq": 前复权, "hfq": 后复权
-    download_stock_data(["600519"], ADJUST_TYPE)
+    download_stock_data(["600519", "600011"], ADJUST_TYPE)
 
 
 """

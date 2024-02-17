@@ -1,1 +1,1 @@
-from .moving_average_strategy import MovingAverageCrossStrategy
+from .rule_based_strategy import MovingAverageCrossStrategy, MACDStrategy
