@@ -49,7 +49,6 @@ def download_stock_data(stock_symbols, adjust_type=""):
 
 if __name__ == "__main__":
     # 在这里下载回测需要用到的数据...
-
     def check_data_dir(dir_path):
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)

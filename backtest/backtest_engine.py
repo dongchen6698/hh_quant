@@ -1,4 +1,7 @@
 # backtest/backtest_engine.py
+import warnings
+
+warnings.filterwarnings("ignore")
 
 import sys
 
@@ -9,24 +12,24 @@ import backtrader as bt
 import pandas as pd
 import pprint
 from datetime import datetime
-from strategies import MovingAverageCrossStrategy, MACDStrategy
+from strategies import MovingAverageCrossStrategy, MACDStrategy, MixStrategy
 from backtest_utils import CustomCommissionSchema, CustomAnalyzer
 
-from backtrader_plotting import Bokeh
-from backtrader_plotting.schemes import Tradimo
+# from backtrader_plotting import Bokeh
+# from backtrader_plotting.schemes import Tradimo
 
 
-BACKTEST_INITIAL_CASH = 1000000  # 初始化资金
-BACKTEST_SIZER = 100  # 设定每笔交易100股
+BACKTEST_INITIAL_CASH = 100000  # 初始化资金
+BACKTEST_SIZER = 1  # 设定每笔交易100股
 BACKTEST_SLIPPAGE_TYPE = "perc"  # 初始化双边滑点类型
 BACKTEST_SLIPPAGE_VALUE = 0.0001  # 初始化双边滑点0.0001
-BACKTEST_START_DATE = "20150101"  # 回测开始日期
-BACKTEST_END_DATE = "20200101"  # 回测结束日期
-BACKTEST_INDEX_SYMBOLS = "600011"
-BACKTEST_STOCK_SYMBOLS = ["600011"]
+BACKTEST_START_DATE = "20200101"  # 回测开始日期
+BACKTEST_END_DATE = "20220101"  # 回测结束日期
+BACKTEST_INDEX_SYMBOLS = "000300"
+BACKTEST_STOCK_SYMBOLS = ["000300"]
 
-INDEX_DATA_DIR = "./backtest_data/stock_data"
-STOCK_DATA_DIR = "./backtest_data/stock_data"
+INDEX_DATA_DIR = "./backtest_data/index_data"
+STOCK_DATA_DIR = "./backtest_data/index_data"
 
 APPLY_RISK_MANAGE = False
 
@@ -52,10 +55,10 @@ class BacktestEngine:
         print("开始设置回测基础参数...")
         self.cerebro.broker.setcash(BACKTEST_INITIAL_CASH)
         self.cerebro.broker.addcommissioninfo(CustomCommissionSchema())  # 配置自定义的佣金类型
-        if BACKTEST_SLIPPAGE_TYPE == "fix":  # 每笔交易滑点为固定值
-            self.cerebro.broker.set_slippage_fixed(BACKTEST_SLIPPAGE_VALUE)
-        elif BACKTEST_SLIPPAGE_TYPE == "perc":  # 每笔交易滑点为百分比
-            self.cerebro.broker.set_slippage_perc(BACKTEST_SLIPPAGE_VALUE)
+        # if BACKTEST_SLIPPAGE_TYPE == "fix":  # 每笔交易滑点为固定值
+        #     self.cerebro.broker.set_slippage_fixed(BACKTEST_SLIPPAGE_VALUE)
+        # elif BACKTEST_SLIPPAGE_TYPE == "perc":  # 每笔交易滑点为百分比
+        #     self.cerebro.broker.set_slippage_perc(BACKTEST_SLIPPAGE_VALUE)
         self.cerebro.addsizer(bt.sizers.FixedSize, stake=BACKTEST_SIZER)
 
     def run_init_stock_data(self):
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     backtest_engine.run_init_stock_data()  # 配置回测数据
     backtest_engine.run_init_benchmark_data()  # 配置基准数据
     # 配置策略
-    backtest_engine.run_init_strategy(MACDStrategy)
+    backtest_engine.run_init_strategy(MixStrategy)
     # 配置分析器
     backtest_engine.run_init_analyzer()
     # 配置benchmark

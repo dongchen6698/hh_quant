@@ -30,3 +30,8 @@
 > * 1. cd backtest # 进入回测目录
 > * 2. cd backtest_data & python download_backtest_data.py # 下载回测数据 & 基准数据
 > * 3. python backtest_engine.py # 启动回测
+
+
+# 5. 选股 & 择时
+* 量化选股 = 通过回归的方式直接预测收益率，倒排序选择TopN
+* 量化择时 = 通过分类的方式直接预测交易信号，例如：未来N天收益率超过过去M天收益率mean * 2（过去M天收益率std）
