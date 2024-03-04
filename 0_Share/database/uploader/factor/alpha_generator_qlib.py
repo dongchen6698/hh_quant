@@ -182,3 +182,13 @@ class AlphaFactorGenerator:
         for field_name, field_expression in zip(names, fields):
             result[field_name] = field_expression
         return result
+
+
+if __name__ == "__main__":
+    alpha_generator = AlphaFactorGenerator()
+    alpha_factor_dict = alpha_generator.get_alpha_expression()
+    alpha_size = len(alpha_factor_dict.keys())
+    import json
+
+    with open(f"./alpha_{alpha_size}.json", "w") as f:
+        json.dump(alpha_factor_dict, f)

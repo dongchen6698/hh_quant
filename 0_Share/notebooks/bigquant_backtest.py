@@ -20,8 +20,6 @@ from bigtrader.utils.my_collections import NumPyDeque
 from bigtrader.constant import OrderType
 from bigtrader.constant import Direction
 
-# <aistudiograph>
-
 
 # @param(id="m2", name="run")
 # Python 代码入口函数，input_1/2/3 对应三个输入端，data_1/2/3 对应三个输出端
@@ -145,4 +143,3 @@ m3 = M.trade.v4(
     backtest_only=True,
     benchmark="000300.HIX",
 )
-# </aistudiograph>
