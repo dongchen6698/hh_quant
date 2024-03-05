@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+import akshare as ak
 
 
 class FactorUploader:
@@ -50,7 +51,8 @@ class FactorUploader:
             print(f"开始构建【qlib因子】特征到【{table_name}】")
             alpha_factor_dict = json.loads(open("./uploader/factor/alpha_179.json", "r").read())
             existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
-            for stock_code in tqdm(self.downloader._download_stock_base_info()["stock_code"]):
+            # for stock_code in tqdm(self.downloader._download_stock_base_info()["stock_code"]):
+            for stock_code in tqdm(ak.index_stock_cons("000300")["品种代码"].tolist()):
                 if stock_code not in existing_check:
                     stock_df = self.downloader._download_stock_history_info(stock_code)
                     dataframe = stock_df[["stock_code", "datetime"]]

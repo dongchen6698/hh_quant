@@ -188,6 +188,9 @@ class AkShareUploader:
                             index_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
                     except TypeError:
                         print(f"{index_code}_{index_name} _upload_index_history_info TypeError...")
+                    except KeyboardInterrupt:
+                        print(f"{index_code}_{index_name} _upload_index_history_info KeyboardInterrupt...")
+                        break
                     except:
                         print(f"{index_code}_{index_name} _upload_index_history_info ERROR...")
                         break

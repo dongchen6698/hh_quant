@@ -45,13 +45,13 @@ def init_database_data(start_date="20000101", end_date="20231231"):
     # 初始化downloader
     uploader = AkShareUploader(db_conn=conn, start_date=start_date, end_date=end_date)
     # 开始下载数据
-    # uploader._upload_stock_trade_date(table_name=config.TABLE_STOCK_TRADE_DATA_INFO)  # 交易日历数据
-    # uploader._upload_stock_base_info(table_name=config.TABLE_STOCK_BASE_INFO)  # 股票代码列表
-    # uploader._upload_stock_history_info(table_name=config.TABLE_STOCK_HISTORY_INFO)  # 个股历史数据
-    # uploader._upload_stock_individual_info(table_name=config.TABLE_STOCK_INDIVIDUAL_INFO)  # 个股基础数据
+    uploader._upload_stock_trade_date(table_name=config.TABLE_STOCK_TRADE_DATA_INFO)  # 交易日历数据
+    uploader._upload_stock_base_info(table_name=config.TABLE_STOCK_BASE_INFO)  # 股票代码列表
+    uploader._upload_stock_history_info(table_name=config.TABLE_STOCK_HISTORY_INFO)  # 个股历史数据
+    uploader._upload_stock_individual_info(table_name=config.TABLE_STOCK_INDIVIDUAL_INFO)  # 个股基础数据
     uploader._upload_stock_indicator_info(table_name=config.TABLE_STOCK_INDICATOR_INFO)  # 个股指标信息
-    # uploader._upload_index_base_info(table_name=config.TABLE_INDEX_BASE_INFO)  # 指数代码列表
-    # uploader._upload_index_history_info(table_name=config.TABLE_INDEX_HISTORY_INFO)  # 指数历史数据
+    uploader._upload_index_base_info(table_name=config.TABLE_INDEX_BASE_INFO)  # 指数代码列表
+    uploader._upload_index_history_info(table_name=config.TABLE_INDEX_HISTORY_INFO)  # 指数历史数据
     # --------------------------------------------------------------------------------------------------------------
     # uploader._upload_stock_event_info(table_name=config.TABLE_STOCK_EVENT_INFO)
     # 关闭连接
