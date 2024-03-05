@@ -48,7 +48,6 @@ class AkShareUploader:
     def _upload_stock_history_info(self, adjust="hfq", table_name=None):
         if table_name:
             existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
-            print(len(existing_check))
             print(f"开始上传【股票-行情数据】数据到【{table_name}】")
             for stock_code, stock_name in tqdm(ak.stock_info_a_code_name().to_records(index=False)):
                 if stock_code not in existing_check:
@@ -132,9 +131,12 @@ class AkShareUploader:
                             stock_info.insert(0, "stock_code", stock_code)
                             # 插入数据库
                             stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+                    except KeyboardInterrupt:
+                        print(f"{stock_code}_{stock_name} _upload_stock_indicator_info KeyboardInterrupt...")
+                        break
                     except:
                         print(f"{stock_code}_{stock_name} _upload_stock_indicator_info ERROR...")
-                        break
+                        # break
 
     def _upload_index_base_info(self, table_name=None):
         if table_name:

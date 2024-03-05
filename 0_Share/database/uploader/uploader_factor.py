@@ -14,7 +14,7 @@ class FactorUploader:
     def _upload_date_factor(self, table_name=None):
         if table_name:
             print(f"开始构建【日期】特征到【{table_name}】")
-            dataframe = self.downloader._download_stock_trade_date()
+            dataframe = self.downloader._download_stock_trade_date()  # 获取交易日历信息
             existing_check = set([str(i) for i in set(pd.read_sql_query(f"select distinct datetime from {table_name}", self.db_conn)["datetime"].tolist())])
             dataframe = dataframe[~dataframe["datetime"].map(lambda x: str(x) in existing_check)]
             if dataframe.empty:
