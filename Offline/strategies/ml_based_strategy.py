@@ -6,8 +6,9 @@ from .base_strategy import BaseStrategy
 class CustomMLStrategy(BaseStrategy):
     params = (
         ("take_profit_percent", 0.15),
-        ("stop_loss_percent", -0.03),
+        ("stop_loss_percent", -0.05),
         ("max_holding_period", 5),
+        ("max_cash_per_instrument", 0.2),
         ("top_n", 3),
         ("model_prediction_file", ""),
     )
@@ -64,20 +65,24 @@ class CustomMLStrategy(BaseStrategy):
     def buy_top_predicted_stocks(self):
         # 获取前一个交易日预测的今日结果
         today_predictions = self.model_prediction[self.model_prediction["datetime"] == self.datas[0].datetime.date(0).isoformat()]
-        # selected_stocks = today_predictions[
-        #     (today_predictions["max_return_pred"] > self.params.take_profit_percent) & (today_predictions["min_return_pred"] > self.params.stop_loss_percent)
-        # ].nlargest(self.params.top_n, "max_return_pred")
-        selected_stocks = today_predictions.nlargest(self.params.top_n, "norm_return_pred")
-
+        selected_stocks = today_predictions.nlargest(self.params.top_n, "open_N_return_pred")
         current_positions = [data._name for data in self.datas if self.getposition(data).size > 0]
         for _, row in selected_stocks.iterrows():
             stock_code = row["stock_code"]
             if stock_code not in current_positions:
                 data = self.getdatabyname(stock_code)
                 if data:
-                    # print(row)x
-                    self.buy(data=data, exectype=bt.Order.Market)
-                    self.holding[stock_code] = 0  # Initialize holding period
+                    # self.buy(data=data, exectype=bt.Order.Market)
+                    # self.holding[stock_code] = 1  # Initialize holding period
+
+                    # 计算允许的最大购买金额
+                    max_buy_cash = self.broker.getvalue() * self.params.max_cash_per_instrument
+                    # 计算当前股价可以买入的最大股数
+                    max_buy_size = int(max_buy_cash / data.close[0])
+                    # 如果计算出的最大股数大于0，则执行买入操作
+                    if max_buy_size > 0:
+                        self.buy(data=data, size=max_buy_size, exectype=bt.Order.Market)
+                        self.holding[stock_code] = 1  # Initialize holding period
 
     def next(self):
         self.manage_position()
