@@ -26,7 +26,6 @@ import Share.database.database_config as db_config
 
 
 BACKTEST_INITIAL_CASH = 100000  # 初始化资金
-BACKTEST_SIZER = 100  # 设定每笔交易100股
 BACKTEST_SLIPPAGE_TYPE = "perc"  # 初始化双边滑点类型
 BACKTEST_SLIPPAGE_VALUE = 0.0001  # 初始化双边滑点0.0001
 BACKTEST_START_DATE = "20200101"  # 回测开始日期
