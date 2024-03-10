@@ -66,7 +66,7 @@ def init_factor_data(start_date="20000101", end_date="20231231"):
     exp_excutor = AlphaExpressionExcutor()
     # 开始构建Factor数据
     uploader._upload_date_factor(table_name=config.TABLE_STOCK_FACTOR_DATE_INFO)
-    uploader._upload_qlib_factor(table_name=config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor)
+    uploader._upload_qlib_factor(table_name=config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code="000905")  # 构建中证50的所有factor
     # 关闭连接
     conn.close()
 

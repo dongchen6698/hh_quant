@@ -49,7 +49,7 @@ class BacktestEngine:
         #     self.cerebro.broker.set_slippage_fixed(BACKTEST_SLIPPAGE_VALUE)
         # elif BACKTEST_SLIPPAGE_TYPE == "perc":  # 每笔交易滑点为百分比
         #     self.cerebro.broker.set_slippage_perc(BACKTEST_SLIPPAGE_VALUE)
-        self.cerebro.addsizer(bt.sizers.FixedSize, stake=BACKTEST_SIZER)  # 配置固定的交易数量
+        # self.cerebro.addsizer(bt.sizers.FixedSize, stake=BACKTEST_SIZER)  # 配置固定的交易数量
 
     def run_init_stock_data(self):
         print("开始添加回测股票数据...")

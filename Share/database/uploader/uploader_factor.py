@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import akshare as ak
+import sys
 
 
 class FactorUploader:
@@ -46,18 +47,26 @@ class FactorUploader:
                 dataframe = dataframe.replace([np.inf, -np.inf], np.nan).dropna()
                 dataframe.to_sql(table_name, self.db_conn, if_exists="append", index=False)
 
-    def _upload_qlib_factor(self, table_name=None, exp_excutor=None):
+    def _upload_qlib_factor(self, table_name=None, exp_excutor=None, index_code=None):
         if table_name:
-            print(f"开始构建【qlib因子】特征到【{table_name}】")
-            alpha_factor_dict = json.loads(open("./uploader/factor/alpha_179.json", "r").read())
-            existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
-            # for stock_code in tqdm(self.downloader._download_stock_base_info()["stock_code"]):
-            for stock_code in tqdm(ak.index_stock_cons("000300")["品种代码"].tolist()):
-                if stock_code not in existing_check:
-                    stock_df = self.downloader._download_stock_history_info(stock_code)
-                    dataframe = stock_df[["stock_code", "datetime"]]
-                    for alpha_name, alpha_expression in alpha_factor_dict.items():
-                        dataframe[alpha_name] = exp_excutor.excute(stock_df, alpha_expression)
-                    # 插入数据库
-                    dataframe = dataframe.replace([np.inf, -np.inf], np.nan).dropna()
-                    dataframe.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+            try:
+                print(f"开始构建【qlib因子】特征到【{table_name}】")
+                alpha_factor_dict = json.loads(open("./uploader/factor/alpha_179.json", "r").read())
+                existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+                if index_code is not None:
+                    stock_code_list = ak.index_stock_cons(index_code)["品种代码"].tolist()
+                else:
+                    stock_code_list = self.downloader._download_stock_base_info()["stock_code"]
+                for stock_code in tqdm(stock_code_list):
+                    if stock_code not in existing_check:
+                        stock_df = self.downloader._download_stock_history_info(stock_code)
+                        dataframe = stock_df[["stock_code", "datetime"]]
+                        for alpha_name, alpha_expression in alpha_factor_dict.items():
+                            dataframe[alpha_name] = exp_excutor.excute(stock_df, alpha_expression)
+                        # 插入数据库
+                        dataframe = dataframe.replace([np.inf, -np.inf], np.nan).dropna()
+                        dataframe.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+            except KeyboardInterrupt:
+                sys.exit(0)
+            except:
+                print(f"_upload_qlib_factor error...")

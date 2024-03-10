@@ -6,7 +6,7 @@ class BaseStrategy(bt.Strategy):
         "log_file": None,
         "benchmark": None,
         "risk_manage": True,
-        "atr_period": 14,
+        "atr_period": 7,
         "atr_take_profit_multiplier": 2,
         "atr_stop_loss_multiplier": 1,
         "atr_risk_percent": 0.01,  # 风险0.01表示每次交易最多风险账户的1%

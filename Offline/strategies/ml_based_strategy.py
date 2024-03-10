@@ -24,7 +24,7 @@ class CustomMLStrategy(BaseStrategy):
 
     def buy_top_predicted_stocks(self):
         today_predictions = self.model_prediction[self.model_prediction["datetime"] == self.datas[0].datetime.date(0).isoformat()]
-        selected_stocks = today_predictions.nlargest(self.params.top_n, "norm_return_pred")
+        selected_stocks = today_predictions.nlargest(self.params.top_n, "future_return_pred")
         current_positions = [data._name for data in self.datas if self.getposition(data).size > 0]
         for _, row in selected_stocks.iterrows():
             stock_code = row["stock_code"]
