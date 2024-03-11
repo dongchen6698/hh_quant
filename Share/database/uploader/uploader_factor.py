@@ -54,9 +54,9 @@ class FactorUploader:
                 alpha_factor_dict = json.loads(open("./uploader/factor/alpha_179.json", "r").read())
                 existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
                 if index_code is not None:
-                    stock_code_list = ak.index_stock_cons(index_code)["品种代码"].tolist()
+                    stock_code_list = set(ak.index_stock_cons(index_code)["品种代码"].tolist())
                 else:
-                    stock_code_list = self.downloader._download_stock_base_info()["stock_code"]
+                    stock_code_list = set(self.downloader._download_stock_base_info()["stock_code"])
                 for stock_code in tqdm(stock_code_list):
                     if stock_code not in existing_check:
                         stock_df = self.downloader._download_stock_history_info(stock_code)
@@ -68,5 +68,5 @@ class FactorUploader:
                         dataframe.to_sql(table_name, self.db_conn, if_exists="append", index=False)
             except KeyboardInterrupt:
                 sys.exit(0)
-            except:
-                print(f"_upload_qlib_factor error...")
+            except Exception as e:
+                print(f"_upload_qlib_factor error...{e}")

@@ -49,7 +49,7 @@ def init_database_data(start_date="20000101", end_date="20231231"):
     uploader._upload_stock_base_info(table_name=config.TABLE_STOCK_BASE_INFO)  # 股票代码列表
     uploader._upload_stock_history_info(table_name=config.TABLE_STOCK_HISTORY_INFO)  # 个股历史数据
     uploader._upload_stock_individual_info(table_name=config.TABLE_STOCK_INDIVIDUAL_INFO)  # 个股基础数据
-    uploader._upload_stock_indicator_info(table_name=config.TABLE_STOCK_INDICATOR_INFO)  # 个股指标信息
+    # uploader._upload_stock_indicator_info(table_name=config.TABLE_STOCK_INDICATOR_INFO)  # 个股指标信息
     uploader._upload_index_base_info(table_name=config.TABLE_INDEX_BASE_INFO)  # 指数代码列表
     uploader._upload_index_history_info(table_name=config.TABLE_INDEX_HISTORY_INFO)  # 指数历史数据
     # --------------------------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ def init_database_data(start_date="20000101", end_date="20231231"):
     conn.close()
 
 
-def init_factor_data(start_date="20000101", end_date="20231231"):
+def init_factor_data(start_date="20000101", end_date="20231231", index_code="000016"):
     conn = sqlite3.connect(config.DATABASE_PATH)
     # 初始化基础信息
     downloader = DownloaderBase(db_conn=conn, db_config=config)
@@ -66,7 +66,7 @@ def init_factor_data(start_date="20000101", end_date="20231231"):
     exp_excutor = AlphaExpressionExcutor()
     # 开始构建Factor数据
     uploader._upload_date_factor(table_name=config.TABLE_STOCK_FACTOR_DATE_INFO)
-    uploader._upload_qlib_factor(table_name=config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code="000905")  # 构建中证50的所有factor
+    uploader._upload_qlib_factor(table_name=config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code=index_code)  # 构建中证50的所有factor
     # 关闭连接
     conn.close()
 
@@ -78,6 +78,6 @@ if __name__ == "__main__":
     # 初始化数据表
     init_database_schema()
     # 插入数据(首次数据从20000101 ～ 20231231)
-    # init_database_data(start_date="20000101", end_date="20231231")
+    init_database_data(start_date="20000101", end_date="20231231")
     # 构建特征数据
-    init_factor_data(start_date="20000101", end_date="20231231")
+    init_factor_data(start_date="20000101", end_date="20231231", index_code="000016")

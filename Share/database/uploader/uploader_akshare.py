@@ -186,14 +186,13 @@ class AkShareUploader:
                             index_info.insert(0, "index_code", index_code)
                             # 插入数据库
                             index_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
-                    except TypeError:
-                        print(f"{index_code}_{index_name} _upload_index_history_info TypeError...")
                     except KeyboardInterrupt:
                         print(f"{index_code}_{index_name} _upload_index_history_info KeyboardInterrupt...")
                         break
-                    except:
-                        print(f"{index_code}_{index_name} _upload_index_history_info ERROR...")
-                        break
+                    except TypeError:
+                        print(f"{index_code}_{index_name} _upload_index_history_info TypeError...")
+                    except Exception as e:
+                        print(f"{index_code}_{index_name} _upload_index_history_info ERROR...{e}")
 
     # def _upload_stock_event_info(self, table_name=None):
     #     if table_name:

@@ -219,7 +219,9 @@ class CustomAnalyzer(bt.Analyzer):
         return self.rets
 
     def get_strategy_returns(self):
+        """获取策略收益率(daily)"""
         return self.returns
 
     def get_benchmark_returns(self):
+        """获取基准收益率(daily)"""
         return self.benchmark_returns
