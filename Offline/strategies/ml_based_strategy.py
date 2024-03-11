@@ -24,17 +24,16 @@ class CustomMLStrategy(BaseStrategy):
 
     def buy_top_predicted_stocks(self):
         today_predictions = self.model_prediction[self.model_prediction["datetime"] == self.datas[0].datetime.date(0).isoformat()]
-        selected_stocks = today_predictions.nlargest(self.params.top_n, "future_return_pred")
+        today_predictions = today_predictions[today_predictions["future_return_pred"] > 0]
+        selected_stocks = today_predictions.nlargest(self.params.top_n, "future_return_pred")["stock_code"]
         current_positions = [data._name for data in self.datas if self.getposition(data).size > 0]
-        for _, row in selected_stocks.iterrows():
-            stock_code = row["stock_code"]
+        for stock_code in selected_stocks:
             if stock_code not in current_positions:
                 data = self.getdatabyname(stock_code)
                 if data:
                     size = self.get_position_size_with_atr(data)  # 使用ATR计算仓位大小
                     if size > 0:
                         self.buy(data=data, size=size, exectype=bt.Order.Market)
-                        self.holding[stock_code] = 1  # Initialize holding period
 
     def next(self):
         self.manage_position()

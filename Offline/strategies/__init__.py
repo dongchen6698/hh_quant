@@ -1,2 +1,2 @@
-from .rule_based_strategy import MovingAverageCrossStrategy, MACDStrategy, MixStrategy
+from .rule_based_strategy import MovingAverageCrossStrategy, MACDStrategy
 from .ml_based_strategy import CustomMLStrategy

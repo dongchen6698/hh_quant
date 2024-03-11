@@ -217,3 +217,9 @@ class CustomAnalyzer(bt.Analyzer):
     def get_analysis(self):
         """获取分析结果"""
         return self.rets
+
+    def get_strategy_returns(self):
+        return self.returns
+
+    def get_benchmark_returns(self):
+        return self.benchmark_returns

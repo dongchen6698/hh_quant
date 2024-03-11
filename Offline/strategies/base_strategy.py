@@ -7,8 +7,8 @@ class BaseStrategy(bt.Strategy):
         "benchmark": None,
         "risk_manage": True,
         "atr_period": 7,
-        "atr_take_profit_multiplier": 2,
-        "atr_stop_loss_multiplier": 1,
+        "atr_take_profit_multiplier": 2,  # 2 * ATR作为止盈上限
+        "atr_stop_loss_multiplier": 1,  # 1 * ATR作为止损下限
         "atr_risk_percent": 0.01,  # 风险0.01表示每次交易最多风险账户的1%
     }
 
@@ -72,8 +72,8 @@ class BaseStrategy(bt.Strategy):
         if position:
             atr_value = self.atrs[data][0]  # 当前ATR值
             # 计算止盈和止损价格
-            take_profit_price = position.price + self.params.atr_take_profit_multiplier * atr_value
-            stop_loss_price = position.price - self.params.atr_stop_loss_multiplier * atr_value
+            take_profit_price = position.price + self.params.atr_take_profit_multiplier * atr_value  # 买入价格 + 2 * ATR作为止盈上限
+            stop_loss_price = position.price - self.params.atr_stop_loss_multiplier * atr_value  # 买入价格 - 1 * ATR作为止损下限
             # 检查止盈和止损条件
             if data.close[0] > take_profit_price:
                 self.log(f"ATR 触发止盈... 执行平仓【股票: {data._name}】, 购入价格: {position.price}, 止盈价格: {take_profit_price}】")
