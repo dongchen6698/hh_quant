@@ -18,8 +18,10 @@ class BaseStrategy(bt.Strategy):
             print("启动基准对比...")
             self.benchmark = self.getdatabyname(self.params.benchmark)  # 选择基准数据
             self.datas = [data for data in self.datas if data._name != self.params.benchmark]  # 过滤基准数据
+            print(f"回测数据共: {len(self.datas)}")
         # 是否启用风险管理
         if self.params.risk_manage:
+            print(f"开始计算ATR相关指标")
             self.atrs = {data: bt.indicators.AverageTrueRange(data, period=self.params.atr_period) for data in self.datas}
 
         # 使用字典跟踪每个数据源的订单、买入价格和佣金
@@ -78,7 +80,6 @@ class BaseStrategy(bt.Strategy):
             if data.close[0] > take_profit_price:
                 self.log(f"ATR 触发止盈... 执行平仓【股票: {data._name}】, 购入价格: {position.price}, 止盈价格: {take_profit_price}】")
                 self.close(data=data, size=position.size, exectype=bt.Order.Market)
-
             elif data.close[0] < stop_loss_price:
                 self.log(f"ATR 触发止损... 执行平仓【股票: {data._name}】, 购入价格: {position.price}, 止损价格: {stop_loss_price}】")
                 self.close(data=data, size=position.size, exectype=bt.Order.Market)

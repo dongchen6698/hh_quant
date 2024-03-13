@@ -78,6 +78,6 @@ if __name__ == "__main__":
     # 初始化数据表
     init_database_schema()
     # 插入数据(首次数据从20000101 ～ 20231231)
-    init_database_data(start_date="20000101", end_date="20231231")
+    # init_database_data(start_date="20000101", end_date="20231231")
     # 构建特征数据
     init_factor_data(start_date="20000101", end_date="20231231", index_code="000016")
