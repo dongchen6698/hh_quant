@@ -11,3 +11,5 @@
 .venv/
 # notebooks/
 __pycache__/
+logs/
+models/
