@@ -62,5 +62,5 @@ class CustomMLStrategy(BaseStrategy):
             if not data_position:
                 self.buy_top_predicted_stocks(data, buy_stocks)
             else:
-                self.sell_bottom_predicted_stocks(data, sell_stocks)
+                # self.sell_bottom_predicted_stocks(data, sell_stocks)
                 self.manage_risk_with_atr(data)
