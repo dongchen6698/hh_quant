@@ -1,13 +1,24 @@
+import os
+import sys
+
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+sys.path.append(os.path.abspath(os.path.join(cur_path, "..")))
+
 import akshare as ak
 import pandas as pd
+import time
+
 from datetime import datetime
 from tqdm import tqdm
-import time
+from database_utils import get_stock_code_prefix
+from downloader import DownloaderBase
+import database_config as db_config
 
 
 class AkShareUploader:
     def __init__(self, db_conn, start_date="20000101", end_date="20500101") -> None:
         self.db_conn = db_conn
+        self.db_downloader = DownloaderBase(db_conn=self.db_conn, db_config=db_config)
         self.start_date = start_date
         self.end_date = end_date
 
@@ -37,6 +48,8 @@ class AkShareUploader:
                     "name": "stock_name",
                 }
             )
+            df["stock_prefix"] = df["stock_code"].map(lambda x: get_stock_code_prefix(x))
+            # 增量过滤
             existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
             df = df[~df["stock_code"].isin(existing_check)]
             if df.empty:

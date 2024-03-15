@@ -8,6 +8,7 @@
 
 ## 股票数据
 - 股票代码列表
+    - ak.stock_info_a_code_name() # 并通过utils获取prefix
 - 行情数据（前复权、后复权、不复权）: 
     - ak.stock_zh_a_daily() # 新浪接口，东财数据的复权方式由于是加减法复权，无法用于回测
 - 个股基本信息

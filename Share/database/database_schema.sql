@@ -5,22 +5,21 @@ CREATE TABLE "hh_quant_stock_trade_date_info" (
 CREATE TABLE "hh_quant_stock_base_info" (
     stock_code TEXT NOT NULL PRIMARY KEY
   , stock_name TEXT
+  , stock_prefix TEXT
 );
 
 CREATE TABLE "hh_quant_stock_history_info" (
     stock_code TEXT NOT NULL
   , stock_name TEXT
-  , stock_adjust TEXT
+  , stock_prefix TEXT
+  , adjust_type TEXT
   , datetime DATE NOT NULL
   , open REAL
   , close REAL
   , high REAL
   , low REAL
   , volume INTEGER
-  , turnover REAL
-  , amplitude REAL
-  , change_pct REAL
-  , change_amount REAL
+  , amount REAL
   , turnover_rate REAL
   , PRIMARY KEY(stock_code, datetime)
 );

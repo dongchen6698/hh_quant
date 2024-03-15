@@ -12,6 +12,8 @@
 > * Python
 > * Vscode：变成开发工具IDE
 > * AkShare｜Tushare：用来获取股票数据和推送钉钉消息
+> * Baostock:
+    * pip install baostock -i https://pypi.tuna.tsinghua.edu.cn/simple/ --trusted-host pypi.tuna.tsinghua.edu.cn
 > * streamlit：用于制作web监控页面
 > * Tensorflow｜Sklearn：机器学习 & 深度学习工具
 > * Pandas & Numpy：数据分析处理工具

@@ -1,13 +1,21 @@
+import os
+import sys
+
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+sys.path.append(os.path.abspath(os.path.join(cur_path, "..")))
+
 import json
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
 import akshare as ak
 import sys
 
+from tqdm import tqdm
+from downloader import DownloaderBase
+
 
 class FactorUploader:
-    def __init__(self, db_conn, db_downloader=None, start_date="20000101", end_date="20500101") -> None:
+    def __init__(self, db_conn, db_downloader: DownloaderBase = None, start_date="20000101", end_date="20500101") -> None:
         self.db_conn = db_conn
         self.downloader = db_downloader
         self.start_date = start_date
