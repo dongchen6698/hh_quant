@@ -58,38 +58,38 @@ class AkShareUploader:
                 # 插入数据库
                 df.to_sql(table_name, self.db_conn, if_exists="append", index=False)
 
-    def _upload_stock_history_info(self, adjust="hfq", table_name=None):
-        if table_name:
-            existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
-            print(f"开始上传【股票-行情数据】数据到【{table_name}】")
-            for stock_code, stock_name in tqdm(ak.stock_info_a_code_name().to_records(index=False)):
-                if stock_code not in existing_check:
-                    try:
-                        stock_info = ak.stock_zh_a_hist(symbol=stock_code, adjust=adjust, start_date=self.start_date, end_date=self.end_date)
-                        if not stock_info.empty:
-                            stock_info = stock_info.rename(
-                                columns={
-                                    "日期": "datetime",
-                                    "开盘": "open",
-                                    "最高": "high",
-                                    "最低": "low",
-                                    "收盘": "close",
-                                    "成交量": "volume",
-                                    "成交额": "turnover",
-                                    "振幅": "amplitude",
-                                    "涨跌幅": "change_pct",
-                                    "涨跌额": "change_amount",
-                                    "换手率": "turnover_rate",
-                                }
-                            )
-                            stock_info.insert(0, "stock_adjust", adjust)
-                            stock_info.insert(0, "stock_name", stock_name)
-                            stock_info.insert(0, "stock_code", stock_code)
-                            # 插入数据库
-                            stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
-                    except:
-                        print(f"{stock_code}_{stock_name} _upload_stock_history_info ERROR...")
-                        break
+    # def _upload_stock_history_info(self, adjust="hfq", table_name=None):
+    #     if table_name:
+    #         existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+    #         print(f"开始上传【股票-行情数据】数据到【{table_name}】")
+    #         for stock_code, stock_name in tqdm(ak.stock_info_a_code_name().to_records(index=False)):
+    #             if stock_code not in existing_check:
+    #                 try:
+    #                     stock_info = ak.stock_zh_a_hist(symbol=stock_code, adjust=adjust, start_date=self.start_date, end_date=self.end_date)
+    #                     if not stock_info.empty:
+    #                         stock_info = stock_info.rename(
+    #                             columns={
+    #                                 "日期": "datetime",
+    #                                 "开盘": "open",
+    #                                 "最高": "high",
+    #                                 "最低": "low",
+    #                                 "收盘": "close",
+    #                                 "成交量": "volume",
+    #                                 "成交额": "turnover",
+    #                                 "振幅": "amplitude",
+    #                                 "涨跌幅": "change_pct",
+    #                                 "涨跌额": "change_amount",
+    #                                 "换手率": "turnover_rate",
+    #                             }
+    #                         )
+    #                         stock_info.insert(0, "stock_adjust", adjust)
+    #                         stock_info.insert(0, "stock_name", stock_name)
+    #                         stock_info.insert(0, "stock_code", stock_code)
+    #                         # 插入数据库
+    #                         stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+    #                 except:
+    #                     print(f"{stock_code}_{stock_name} _upload_stock_history_info ERROR...")
+    #                     break
 
     def _upload_stock_individual_info(self, table_name=None):
         if table_name:
@@ -114,98 +114,100 @@ class AkShareUploader:
                             )
                             # 插入数据库
                             stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
-                    except:
-                        print(f"{stock_code}_{stock_name} _upload_stock_individual_info ERROR...")
-                        break
-
-    def _upload_stock_indicator_info(self, table_name=None):
-        if table_name:
-            existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
-            print(f"开始上传【个股指标】数据到【{table_name}】")
-            for stock_code, stock_name in tqdm(ak.stock_info_a_code_name().to_records(index=False)):
-                if stock_code not in existing_check:
-                    try:
-                        stock_info = ak.stock_a_indicator_lg(symbol=stock_code)
-                        if not stock_info.empty:
-                            stock_info = stock_info.rename(
-                                columns={
-                                    "trade_date": "datetime",
-                                    "pe": "pe",
-                                    "pe_ttm": "pe_ttm",
-                                    "pb": "pb",
-                                    "ps": "ps",
-                                    "ps_ttm": "ps_ttm",
-                                    "dv_ratio": "dv_ratio",
-                                    "dv_ttm": "dv_ttm",
-                                    "total_mv": "total_mv",
-                                }
-                            )
-                            stock_info.insert(0, "stock_name", stock_name)
-                            stock_info.insert(0, "stock_code", stock_code)
-                            # 插入数据库
-                            stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
                     except KeyboardInterrupt:
-                        print(f"{stock_code}_{stock_name} _upload_stock_indicator_info KeyboardInterrupt...")
-                        break
-                    except:
-                        print(f"{stock_code}_{stock_name} _upload_stock_indicator_info ERROR...")
-                        # break
-
-    def _upload_index_base_info(self, table_name=None):
-        if table_name:
-            print(f"开始上传【指数-代码列表】数据到【{table_name}】")
-            df = ak.index_stock_info().rename(
-                columns={
-                    "index_code": "index_code",
-                    "display_name": "index_name",
-                    "publish_date": "publish_date",
-                }
-            )
-            # 增量过滤
-            existing_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
-            df = df[~df["index_code"].isin(existing_check)]
-            if df.empty:
-                print("没有新的【指数-代码列表】数据需要上传。")
-            else:
-                # 插入数据库
-                df.to_sql(table_name, self.db_conn, if_exists="append", index=False)
-
-    def _upload_index_history_info(self, table_name=None):
-        if table_name:
-            existing_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
-            print(f"开始上传【指数数据】数据到【{table_name}】")
-            for index_code, index_name, pulish_date in tqdm(ak.index_stock_info().to_records(index=False)):
-                if index_code not in existing_check:
-                    try:
-                        index_info = ak.index_zh_a_hist(symbol=index_code, start_date=self.start_date, end_date=self.end_date)
-                        if not index_info.empty:
-                            index_info = index_info.rename(
-                                columns={
-                                    "日期": "datetime",
-                                    "开盘": "open",
-                                    "最高": "high",
-                                    "最低": "low",
-                                    "收盘": "close",
-                                    "成交量": "volume",
-                                    "成交额": "turnover",
-                                    "振幅": "amplitude",
-                                    "涨跌幅": "change_pct",
-                                    "涨跌额": "change_amount",
-                                    "换手率": "turnover_rate",
-                                }
-                            )
-                            index_info.insert(0, "index_publish_date", pulish_date)
-                            index_info.insert(0, "index_name", index_name)
-                            index_info.insert(0, "index_code", index_code)
-                            # 插入数据库
-                            index_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
-                    except KeyboardInterrupt:
-                        print(f"{index_code}_{index_name} _upload_index_history_info KeyboardInterrupt...")
-                        break
-                    except TypeError:
-                        print(f"{index_code}_{index_name} _upload_index_history_info TypeError...")
+                        print(f"{stock_code}_{stock_name} _upload_stock_individual_info KeyboardInterrupt...")
+                        sys.exit(0)
                     except Exception as e:
-                        print(f"{index_code}_{index_name} _upload_index_history_info ERROR...{e}")
+                        print(f"{stock_code}_{stock_name} _upload_stock_individual_info error...{e}")
+
+    # def _upload_stock_indicator_info(self, table_name=None):
+    #     if table_name:
+    #         existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+    #         print(f"开始上传【个股指标】数据到【{table_name}】")
+    #         for stock_code, stock_name in tqdm(ak.stock_info_a_code_name().to_records(index=False)):
+    #             if stock_code not in existing_check:
+    #                 try:
+    #                     stock_info = ak.stock_a_indicator_lg(symbol=stock_code)
+    #                     if not stock_info.empty:
+    #                         stock_info = stock_info.rename(
+    #                             columns={
+    #                                 "trade_date": "datetime",
+    #                                 "pe": "pe",
+    #                                 "pe_ttm": "pe_ttm",
+    #                                 "pb": "pb",
+    #                                 "ps": "ps",
+    #                                 "ps_ttm": "ps_ttm",
+    #                                 "dv_ratio": "dv_ratio",
+    #                                 "dv_ttm": "dv_ttm",
+    #                                 "total_mv": "total_mv",
+    #                             }
+    #                         )
+    #                         stock_info.insert(0, "stock_name", stock_name)
+    #                         stock_info.insert(0, "stock_code", stock_code)
+    #                         # 插入数据库
+    #                         stock_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+    #                 except KeyboardInterrupt:
+    #                     print(f"{stock_code}_{stock_name} _upload_stock_indicator_info KeyboardInterrupt...")
+    #                     break
+    #                 except:
+    #                     print(f"{stock_code}_{stock_name} _upload_stock_indicator_info ERROR...")
+    #                     # break
+
+    # def _upload_index_base_info(self, table_name=None):
+    #     if table_name:
+    #         print(f"开始上传【指数-代码列表】数据到【{table_name}】")
+    #         df = ak.index_stock_info().rename(
+    #             columns={
+    #                 "index_code": "index_code",
+    #                 "display_name": "index_name",
+    #                 "publish_date": "publish_date",
+    #             }
+    #         )
+    #         # 增量过滤
+    #         existing_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
+    #         df = df[~df["index_code"].isin(existing_check)]
+    #         if df.empty:
+    #             print("没有新的【指数-代码列表】数据需要上传。")
+    #         else:
+    #             # 插入数据库
+    #             df.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+
+    # def _upload_index_history_info(self, table_name=None):
+    #     if table_name:
+    #         existing_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
+    #         print(f"开始上传【指数数据】数据到【{table_name}】")
+    #         for index_code, index_name, pulish_date in tqdm(ak.index_stock_info().to_records(index=False)):
+    #             if index_code not in existing_check:
+    #                 try:
+    #                     index_info = ak.index_zh_a_hist(symbol=index_code, start_date=self.start_date, end_date=self.end_date)
+    #                     if not index_info.empty:
+    #                         index_info = index_info.rename(
+    #                             columns={
+    #                                 "日期": "datetime",
+    #                                 "开盘": "open",
+    #                                 "最高": "high",
+    #                                 "最低": "low",
+    #                                 "收盘": "close",
+    #                                 "成交量": "volume",
+    #                                 "成交额": "turnover",
+    #                                 "振幅": "amplitude",
+    #                                 "涨跌幅": "change_pct",
+    #                                 "涨跌额": "change_amount",
+    #                                 "换手率": "turnover_rate",
+    #                             }
+    #                         )
+    #                         index_info.insert(0, "index_publish_date", pulish_date)
+    #                         index_info.insert(0, "index_name", index_name)
+    #                         index_info.insert(0, "index_code", index_code)
+    #                         # 插入数据库
+    #                         index_info.to_sql(table_name, self.db_conn, if_exists="append", index=False)
+    #                 except KeyboardInterrupt:
+    #                     print(f"{index_code}_{index_name} _upload_index_history_info KeyboardInterrupt...")
+    #                     break
+    #                 except TypeError:
+    #                     print(f"{index_code}_{index_name} _upload_index_history_info TypeError...")
+    #                 except Exception as e:
+    #                     print(f"{index_code}_{index_name} _upload_index_history_info ERROR...{e}")
 
     # def _upload_stock_event_info(self, table_name=None):
     #     if table_name:

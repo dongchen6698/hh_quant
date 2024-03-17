@@ -88,9 +88,6 @@ class CrossNetLayer(tf.keras.layers.Layer):
         super(CrossNetLayer, self).build(input_shape)
 
     def call(self, inputs, **kwargs):
-        if tf.rank(inputs).numpy() != 2:
-            raise ValueError(f"Unexpected inputs dimensions {tf.rank(inputs).numpy()}, expect to be 2 dimensions")
-
         x0 = tf.expand_dims(inputs, -1)  # [B, dim, 1]
         xi = x0  # xi: 上一层的输出[B, dim, 1], 初始化xi=x0
         for i in range(self.layer_num):

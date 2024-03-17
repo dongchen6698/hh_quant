@@ -15,8 +15,11 @@ class DownloaderBase:
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_stock_base_info(self):
-        query = f"select * from {self.db_config.TABLE_STOCK_BASE_INFO};"
+    def _download_stock_base_info(self, stock_code=None):
+        if stock_code is None:
+            query = f"select * from {self.db_config.TABLE_STOCK_BASE_INFO};"
+        else:
+            query = f"select * from {self.db_config.TABLE_STOCK_BASE_INFO} where stock_code = '{stock_code}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
@@ -35,13 +38,19 @@ class DownloaderBase:
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_stock_individual_info(self):
-        pass
-
-    def _download_stock_event_info(self):
-        pass
+    def _download_stock_individual_info(self, stock_code):
+        query = f"select * from {self.db_config.TABLE_STOCK_INDIVIDUAL_INFO} where stock_code='{stock_code}';"
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
 
     def _download_index_history_info(self, index_code, start_date="19700101", end_date="20500101"):
         query = f"select * from {self.db_config.TABLE_INDEX_HISTORY_INFO} where index_code = '{index_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
+    def _download_stock_indicator_info(self, stock_code, start_date="19700101", end_date="20500101"):
+        query = f"select * from {self.db_config.TABLE_STOCK_INDICATOR_INFO} where stock_code = '{stock_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        for col in ["pe_ttm", "ps_ttm", "pcf_ncf_ttm", "pb_mrq"]:
+            dataframe[col] = pd.to_numeric(dataframe[col], errors="coerce")
         return dataframe

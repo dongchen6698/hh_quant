@@ -34,11 +34,11 @@ class MovingAverageCrossStrategy(BaseStrategy):
             if not data_position:
                 # 如果快速MA穿越慢速MA向上，买入信号
                 if self.crossover[data] > 0:
-                    self.orders[data] = self.buy(data=data)
+                    self.orders[data] = self.buy(data=data, size=100)
             else:
                 # 如果快速MA穿越慢速MA向下，卖出信号
                 if self.crossover[data] < 0:
-                    self.orders[data] = self.sell(data=data)
+                    self.orders[data] = self.close(data=data)
 
 
 class MACDStrategy(BaseStrategy):

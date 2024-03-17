@@ -12,6 +12,9 @@ import sys
 
 from tqdm import tqdm
 from downloader import DownloaderBase
+import sqlite3
+from factor_olhcv.expression_excutor import AlphaExpressionExcutor
+import database_config as db_config
 
 
 class FactorUploader:
@@ -59,7 +62,7 @@ class FactorUploader:
         if table_name:
             try:
                 print(f"开始构建【qlib因子】特征到【{table_name}】")
-                alpha_factor_dict = json.loads(open("./uploader/factor/alpha_179.json", "r").read())
+                alpha_factor_dict = json.loads(open("./factor_olhcv/alpha_179.json", "r").read())
                 existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
                 if index_code is not None:
                     stock_code_list = set(ak.index_stock_cons(index_code)["品种代码"].tolist())
@@ -78,3 +81,18 @@ class FactorUploader:
                 sys.exit(0)
             except Exception as e:
                 print(f"_upload_qlib_factor error...{e}")
+
+
+if __name__ == "__main__":
+    conn = sqlite3.connect("../hh_quant.db")
+    start_date = "20000101"
+    end_date = "20231231"
+    # 初始化基础信息
+    downloader = DownloaderBase(db_conn=conn, db_config=db_config)
+    uploader = FactorUploader(db_conn=conn, db_downloader=downloader, start_date=start_date, end_date=end_date)
+    exp_excutor = AlphaExpressionExcutor()
+    # 开始构建Factor数据
+    uploader._upload_date_factor(table_name=db_config.TABLE_STOCK_FACTOR_DATE_INFO)
+    uploader._upload_qlib_factor(table_name=db_config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code="000300")  # 构建上证50的所有factor
+    # 关闭连接
+    conn.close()

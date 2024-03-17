@@ -47,3 +47,7 @@
 - 价量因子
 - 基本面因子
 - etc
+
+# 使用方法：
+- 1. 初始化数据库：python database_main.py
+- 2. 预计算因子：python ./factor_prebuilder/uploader_factor.py

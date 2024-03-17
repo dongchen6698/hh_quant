@@ -1,3 +1,4 @@
+-- 原始相关数据表
 CREATE TABLE "hh_quant_stock_trade_date_info" (
     datetime DATE NOT NULL PRIMARY KEY
 );
@@ -10,79 +11,58 @@ CREATE TABLE "hh_quant_stock_base_info" (
 
 CREATE TABLE "hh_quant_stock_history_info" (
     stock_code TEXT NOT NULL
-  , stock_name TEXT
-  , stock_prefix TEXT
   , adjust_type TEXT
   , datetime DATE NOT NULL
   , open REAL
-  , close REAL
   , high REAL
   , low REAL
-  , volume INTEGER
+  , close REAL
+  , volume REAL
   , amount REAL
   , turnover_rate REAL
   , PRIMARY KEY(stock_code, datetime)
 );
 
 CREATE TABLE "hh_quant_stock_individual_info" (
-    total_market_cap REAL
+    stock_code TEXT NOT NULL PRIMARY KEY
+  , stock_name TEXT
+  , total_market_cap REAL
   , circulating_market_cap REAL
   , industry TEXT
   , listing_date INTEGER
-  , stock_code TEXT NOT NULL PRIMARY KEY
-  , stock_name TEXT
   , total_shares REAL
   , circulating_shares REAL
 );
 
 CREATE TABLE "hh_quant_stock_indicator_info" (
     stock_code TEXT NOT NULL
-  , stock_name TEXT
   , datetime DATE NOT NULL
-  , pe REAL
   , pe_ttm REAL
-  , pb REAL
-  , ps REAL
-  , ps_ttm INTEGER
-  , dv_ratio REAL
-  , dv_ttm REAL
-  , total_mv REAL
+  , ps_ttm REAL
+  , pcf_ncf_ttm REAL
+  , pb_mrq REAL
   , PRIMARY KEY(stock_code, datetime)
 );
 
-CREATE TABLE "hh_quant_index_base_info" (
-    index_code TEXT NOT NULL PRIMARY KEY
-  , index_name TEXT
-  , publish_date DATE
-);
+-- CREATE TABLE "hh_quant_index_base_info" (
+--     index_code TEXT NOT NULL PRIMARY KEY
+--   , index_name TEXT
+--   , publish_date DATE
+-- );
 
 CREATE TABLE "hh_quant_index_history_info" (
     index_code TEXT NOT NULL
-  , index_name TEXT
-  , index_publish_date DATE
   , datetime DATE NOT NULL
   , open REAL
-  , close REAL
   , high REAL
   , low REAL
-  , volume INTEGER
-  , turnover REAL
-  , amplitude REAL
-  , change_pct REAL
-  , change_amount REAL
-  , turnover_rate REAL
+  , close REAL
+  , volume REAL
+  , amount REAL
   , PRIMARY KEY(index_code, datetime)
 );
 
--- CREATE TABLE "hh_quant_stock_event_info" (
---     stock_code TEXT NOT NULL
---   , stock_name TEXT
---   , datetime DATE NOT NULL
---   , event_type TEXT
---   , event_content TEXT
---   , PRIMARY KEY(stock_code, datetime)
--- );
-
+-- Factor相关数据表
 CREATE TABLE "hh_quant_stock_factor_date_info" (
     datetime DATE NOT NULL PRIMARY KEY
     , weekday INTEGER
