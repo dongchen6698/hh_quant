@@ -13,6 +13,7 @@ class CustomMLStrategy(BaseStrategy):
         "atr_period": 7,
         "atr_take_profit_multiplier": 2,
         "atr_stop_loss_multiplier": 1,
+        "atr_risk_percent": 0.01,
     }
 
     def __init__(self):
@@ -41,15 +42,24 @@ class CustomMLStrategy(BaseStrategy):
         return stock_for_buy, stock_for_sell
 
     def get_position_size_with_atr(self, data):
-        """根据ATR计算仓位大小"""
-        atr_value = self.atrs[data][0]  # 获取ATR值
-        stop_loss = self.params.atr_stop_loss_multiplier * atr_value  # 计算止损价格差
-        # 计算风险金额
-        cash = self.broker.get_cash()  # 获取当前账户现金
-        risk_amount = cash * self.params.atr_risk_percent  # 风险金额是账户现金的一小部分
-        # 计算仓位大小
-        size = risk_amount / stop_loss  # 仓位大小是风险金额除以每股风险
-        return int(size)  # 返回整数部分的股数
+        try:
+            # 获取ATR值，确保ATR值是有效的
+            atr_value = self.atrs.get(data, [None])[0]
+            # 计算止损价格差，确保止损乘数是正数
+            stop_loss = self.params.atr_stop_loss_multiplier * atr_value
+            # 获取当前账户现金，确保现金量是有效的
+            cash = self.broker.get_cash()
+            # 计算风险金额，确保风险百分比在0和1之间
+            risk_percent = self.params.atr_risk_percent
+            risk_amount = cash * risk_percent
+            # 计算仓位大小，并返回整数部分的股数
+            size = risk_amount / stop_loss
+            return int(size)
+        except ValueError as e:
+            # 处理异常，例如打印错误信息
+            print(f"计算仓位时出现错误: {e}")
+            # 出现错误时，可以选择返回零或其他合适的默认值
+            return 0
 
     def next(self):
         # 获取当前日期
@@ -68,8 +78,7 @@ class CustomMLStrategy(BaseStrategy):
                 # 检查买入条件
                 buy_condition_1 = data._name in today_buy_stocks  # 模型预测TopN
                 if buy_condition_1:
-                    # size = self.get_position_size_with_atr(data)  # 使用ATR计算仓位大小
-                    size = 100
+                    size = self.get_position_size_with_atr(data)  # 使用ATR计算仓位大小
                     if size > 0:
                         self.buy(data=data, size=size, exectype=bt.Order.Market)
                         self.holding_period[data._name] = 1  # 初始化持仓天数
