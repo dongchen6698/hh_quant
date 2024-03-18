@@ -35,4 +35,5 @@
 > * 2. cd backtest_data & python download_backtest_data.py # 下载回测数据 & 基准数据
 > * 3. python backtest_engine.py # 启动回测
 
-上云
+# 5. 远程
+root@39.107.56.243
