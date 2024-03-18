@@ -1,21 +1,26 @@
 import backtrader as bt
 import pandas as pd
-from tqdm import tqdm
 from .base_strategy import BaseStrategy
 
 
 class CustomMLStrategy(BaseStrategy):
-    params = (
-        ("top_n", 3),
-        ("take_profit_min_threshold", 0.0),
-        ("stop_loss_max_threshold", -0.0),
-        ("model_pred_dataframe", pd.DataFrame()),
-    )
+    params = {
+        "top_n": 3,
+        "take_profit_min_threshold": 0.0,
+        "stop_loss_max_threshold": -0.0,
+        "model_pred_dataframe": pd.DataFrame(),
+        "max_holding_period": 5,
+        "atr_period": 7,
+        "atr_take_profit_multiplier": 2,
+        "atr_stop_loss_multiplier": 1,
+    }
 
     def __init__(self):
         # 初始化父类方法 & 参数
         super().__init__()  # 调用基础策略的初始化方法
+        self.atrs = {data: bt.indicators.AverageTrueRange(data, period=self.params.atr_period) for data in self.datas}  # 计算ATR相关指标
         self.stock_for_buy, self.stock_for_sell = self.get_model_prediction()
+        self.holding_period = {}  # 新增字典来追踪持仓天数
 
     def get_model_prediction(self):
         def get_stock_for_buy(group):
@@ -35,32 +40,49 @@ class CustomMLStrategy(BaseStrategy):
         stock_for_sell = model_prediction.groupby("datetime").apply(get_stock_for_sell).to_dict()
         return stock_for_buy, stock_for_sell
 
-    def buy_top_predicted_stocks(self, data, selected_stocks):
-        if data._name in selected_stocks:
-            size = self.get_position_size_with_atr(data)  # 使用ATR计算仓位大小
-            if size > 0:
-                self.buy(data=data, size=size, exectype=bt.Order.Market)
-
-    def sell_bottom_predicted_stocks(self, data, selected_stocks):
-        if data._name in selected_stocks:
-            size = self.getposition(data).size
-            self.close(data=data, size=size, exectype=bt.Order.Market)
+    def get_position_size_with_atr(self, data):
+        """根据ATR计算仓位大小"""
+        atr_value = self.atrs[data][0]  # 获取ATR值
+        stop_loss = self.params.atr_stop_loss_multiplier * atr_value  # 计算止损价格差
+        # 计算风险金额
+        cash = self.broker.get_cash()  # 获取当前账户现金
+        risk_amount = cash * self.params.atr_risk_percent  # 风险金额是账户现金的一小部分
+        # 计算仓位大小
+        size = risk_amount / stop_loss  # 仓位大小是风险金额除以每股风险
+        return int(size)  # 返回整数部分的股数
 
     def next(self):
         # 获取当前日期
         current_date = self.datas[0].datetime.date(0).strftime("%Y-%m-%d")  # 格式化日期
         # 获取当前日期的预测的top_n名单
-        buy_stocks = self.stock_for_buy.get(current_date, [])
-        sell_stocks = self.stock_for_sell.get(current_date, [])
+        today_buy_stocks = self.stock_for_buy.get(current_date, [])
+        today_sell_stocks = self.stock_for_sell.get(current_date, [])
         # 遍历每个数据集
         for data in self.datas:
             # 检查是否有挂起的订单
             if self.orders[data]:
                 continue
             # 检查是否持有当前股票
-            data_position = self.getposition(data).size
+            data_position = self.getposition(data)
             if not data_position:
-                self.buy_top_predicted_stocks(data, buy_stocks)
+                # 检查买入条件
+                buy_condition_1 = data._name in today_buy_stocks  # 模型预测TopN
+                if buy_condition_1:
+                    # size = self.get_position_size_with_atr(data)  # 使用ATR计算仓位大小
+                    size = 100
+                    if size > 0:
+                        self.buy(data=data, size=size, exectype=bt.Order.Market)
+                        self.holding_period[data._name] = 1  # 初始化持仓天数
             else:
-                self.sell_bottom_predicted_stocks(data, sell_stocks)
-                self.manage_risk_with_atr(data)
+                # 检查卖出条件
+                sell_condition_1 = data._name in today_sell_stocks  # 模型预测BottomN
+                sell_condition_2 = (
+                    data.close[0] > data_position.price + self.params.atr_take_profit_multiplier * self.atrs[data][0]
+                )  # 买入价格 + 2 * ATR作为止盈上限
+                self_condition_3 = (
+                    data.close[0] < data_position.price - self.params.atr_stop_loss_multiplier * self.atrs[data][0]
+                )  # 买入价格 - 1 * ATR作为止损下限
+                sell_condition_4 = self.holding_period.get(data._name, 0) >= self.params.max_holding_period  # 达到最大持仓周期
+                if sell_condition_1 or sell_condition_2 or self_condition_3 or sell_condition_4:
+                    self.log(f"模型预测: {sell_condition_1}, 止盈: {sell_condition_2}, 止损: {self_condition_3}, 最大持仓周期: {sell_condition_4}")
+                    self.close(data=data, exectype=bt.Order.Market)

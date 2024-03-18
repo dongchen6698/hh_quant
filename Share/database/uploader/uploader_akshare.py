@@ -30,6 +30,7 @@ class AkShareUploader:
                     "trade_date": "datetime",
                 }
             )
+            df = df[pd.to_datetime(df["datetime"]) <= pd.to_datetime(datetime.strptime(self.end_date, "%Y%m%d"))]
             # 增量过滤
             existing_check = set([str(i) for i in set(pd.read_sql_query(f"select distinct datetime from {table_name}", self.db_conn)["datetime"].tolist())])
             df = df[~df["datetime"].map(lambda x: str(x) in existing_check)]

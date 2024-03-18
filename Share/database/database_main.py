@@ -2,6 +2,7 @@ import os
 import json
 import sqlite3
 import database_config as config
+from datetime import datetime, timedelta
 from downloader.downloader_base import DownloaderBase
 from uploader import AkShareUploader, BaoStockUploader
 
@@ -62,10 +63,27 @@ def init_database_data(start_date="20000101", end_date="20231231"):
 
 
 if __name__ == "__main__":
+    # import argparse
+    # parser = argparse.ArgumentParser(description='argparse testing')
+    # parser.add_argument('--update','-n',type=str, default = "bk",required=True,help="a programmer's name")
+    # args = parser.parse_args()
+
     online_update = False
     # 初始化数据库
     init_database()
     # 初始化数据表
     init_database_schema()
-    # 插入数据(首次数据从20000101 ～ 20231231)
-    init_database_data(start_date="20000101", end_date="20231231")
+    if not online_update:
+        # 插入数据(首次数据从20000101 ～ 20231231)
+        init_database_data(start_date="20000101", end_date="20231231")
+    else:
+        # 还需要继续优化
+        # db_conn = sqlite3.connect(config.DATABASE_PATH)
+        # db_downloader = DownloaderBase(db_conn=db_conn, db_config=config)
+        # last_date = datetime.strptime(db_downloader._download_stock_trade_date()["datetime"].max(), "%Y-%m-%d")
+        # update_start_date = datetime.strftime(last_date + timedelta(days=1), "%Y%m%d")
+        # update_end_date = datetime.strftime(datetime.now(), "%Y%m%d")
+        # # 更新数据
+        # print(f"Update start date: {update_start_date}, Update end date: {update_end_date}")
+        # init_database_data(start_date=update_start_date, end_date=update_end_date)
+        pass

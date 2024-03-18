@@ -93,6 +93,6 @@ if __name__ == "__main__":
     exp_excutor = AlphaExpressionExcutor()
     # 开始构建Factor数据
     uploader._upload_date_factor(table_name=db_config.TABLE_STOCK_FACTOR_DATE_INFO)
-    uploader._upload_qlib_factor(table_name=db_config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code="000300")  # 构建上证50的所有factor
+    uploader._upload_qlib_factor(table_name=db_config.TABLE_STOCK_FACTOR_QLIB_INFO, exp_excutor=exp_excutor, index_code="000905")  # 构建上证50的所有factor
     # 关闭连接
     conn.close()

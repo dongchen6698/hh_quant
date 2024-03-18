@@ -96,7 +96,7 @@ class CrossNetLayer(tf.keras.layers.Layer):
                 xiw = tf.tensordot(xi, self.kernels[i], axes=(1, 0))
                 xi = tf.matmul(x0, xiw) + self.bias[i] + xi
             elif self.parameterization == "matrix":
-                xiw = tf.einsum("ij,bjk->bik", self.kernels[i], x_l)  # [B, dim, 1]
+                xiw = tf.einsum("ij,bjk->bik", self.kernels[i], xi)  # [B, dim, 1]
                 xi = x0 * (xiw + self.bias[i]) + xi
             else:  # error
                 raise ValueError("parameterization should be 'vector' or 'matrix'")
