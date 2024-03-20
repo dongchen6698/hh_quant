@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("../")
+
 import backtrader as bt
 from .base_strategy import BaseStrategy
 

@@ -1,1 +1,1 @@
-from .custom import SeNetLayer, CrossNetLayer, DnnLayer
+from .custom import SeNetLayer, DnnLayer, CINLayer
