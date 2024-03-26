@@ -24,11 +24,17 @@ class QuantModel(tf.keras.Model):
         # for feature_name, boundaries in self.config.get("numeric_features_with_boundaries").items():
         #     self.wide_layers[feature_name] = tf.keras.layers.Discretization(bin_boundaries=boundaries, output_mode="one_hot", name=f"{feature_name}_lookup")
 
-        # 创建连续特征的离散化层和嵌入层
-        for feature_name, boundaries in self.config.get("numeric_features_with_boundaries").items():
-            self.lookup_layers[feature_name] = tf.keras.layers.Discretization(bin_boundaries=boundaries, output_mode="int", name=f"{feature_name}_lookup")
+        # # 创建连续特征的离散化层和嵌入层
+        # for feature_name, boundaries in self.config.get("numeric_features_with_boundaries").items():
+        #     self.lookup_layers[feature_name] = tf.keras.layers.Discretization(bin_boundaries=boundaries, output_mode="int", name=f"{feature_name}_lookup")
+        #     self.embedding_layers[feature_name] = tf.keras.layers.Embedding(
+        #         input_dim=len(boundaries) + 1, output_dim=self.config.get("feature_embedding_dims", 6), name=f"{feature_name}_embedding"
+        #     )
+        # 创建连续特征（分桶）的查找层和嵌入层
+        for feature_name, vocab in self.config.get("numeric_categorical_features_with_vocab").items():
+            self.lookup_layers[feature_name] = tf.keras.layers.IntegerLookup(vocabulary=vocab, name=f"{feature_name}_lookup")
             self.embedding_layers[feature_name] = tf.keras.layers.Embedding(
-                input_dim=len(boundaries) + 1, output_dim=self.config.get("feature_embedding_dims", 6), name=f"{feature_name}_embedding"
+                input_dim=len(vocab) + 1, output_dim=self.config.get("feature_embedding_dims", 6), name=f"{feature_name}_embedding"
             )
         # 创建整数特征的查找层和嵌入层
         for feature_name, vocab in self.config.get("integer_categorical_features_with_vocab").items():
