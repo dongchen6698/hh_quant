@@ -50,4 +50,4 @@
 
 # 使用方法：
 - 1. 初始化数据库：python database_main.py
-- 2. 预计算因子：python ./factor_prebuilder/uploader_factor.py
+- 2. 预计算因子：cd factor_prebuilder & python uploader_factor.py
