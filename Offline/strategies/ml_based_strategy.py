@@ -63,15 +63,15 @@ class CustomMLStrategy(BaseStrategy):
                     self.holding_period[data._name] = 1  # 初始化持仓天数
             else:
                 # 检查卖出条件
-                # if data._name in today_buy_stocks:
-                #     self.holding_period[data._name] = 1  # 初始化持仓天数
+                if data._name in today_buy_stocks:
+                    self.holding_period[data._name] = 1  # 初始化持仓天数
                 if data._name in today_sell_stocks:
                     self.close(data=data, exectype=bt.Order.Market)
                 # elif data.close[0] > data_position.price + self.params.atr_take_profit_multiplier * self.atrs[data][0]:
                 #     self.close(data=data, exectype=bt.Order.Market)
                 elif data.close[0] < data_position.price - self.params.atr_stop_loss_multiplier * self.atrs[data][0]:
                     self.close(data=data, exectype=bt.Order.Market)
-                # elif self.holding_period.get(data._name, 0) >= self.params.max_holding_period:
-                #     self.close(data=data, exectype=bt.Order.Market)
-                # else:
-                #     self.holding_period[data._name] += 1
+                elif self.holding_period.get(data._name, 0) >= self.params.max_holding_period:
+                    self.close(data=data, exectype=bt.Order.Market)
+                else:
+                    self.holding_period[data._name] += 1

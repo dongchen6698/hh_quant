@@ -1,1 +1,2 @@
-from .custom import SeNetLayer, DnnLayer, CINLayer
+from .core import DnnLayer
+from .interaction import SeNetLayer, FMLayer, CrossNetLayer, CINLayer
