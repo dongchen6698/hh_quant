@@ -13,8 +13,7 @@ class CustomMLStrategy(BaseStrategy):
         "model_pred_dataframe": pd.DataFrame(),
         "min_holding_period": 5,
         "max_cash_per_instrument": 0.2,
-        "top_n": 3,
-        "atr_period": 7,
+        "top_n": 5,
     }
 
     def __init__(self):
