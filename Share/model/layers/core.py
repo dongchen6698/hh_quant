@@ -17,23 +17,25 @@ class DnnLayer(tf.keras.layers.Layer):
         self.bn_layers = []
 
     def build(self, input_shape):
-        for units in self.hidden_units:
+        for index, units in enumerate(self.hidden_units):
             self.dense_layers.append(
                 tf.keras.layers.Dense(
                     units=units,
                     activation=self.activation,
-                    kernel_initializer=glorot_normal(seed=self.seed),
+                    kernel_initializer=glorot_normal(seed=self.seed + index),
                     bias_initializer=Zeros(),
                     kernel_regularizer=l2(self.l2_reg),
                 )
             )
-            self.dropout_layers.append(tf.keras.layers.Dropout(rate=self.dropout_rate, seed=self.seed))
             if self.use_bn:
                 self.bn_layers.append(tf.keras.layers.BatchNormalization())
+
+            self.dropout_layers.append(tf.keras.layers.Dropout(rate=self.dropout_rate, seed=self.seed + index))
+
         # Be sure to call this somewhere!
         super(DnnLayer, self).build(input_shape)
 
-    def call(self, inputs, training=False):
+    def call(self, inputs, training=None):
         # print(f"Dnn Is Training Mode: {training}")
         x = inputs
         for i in range(len(self.hidden_units)):

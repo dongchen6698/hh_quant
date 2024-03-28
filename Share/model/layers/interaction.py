@@ -3,6 +3,52 @@ from tensorflow.keras.initializers import glorot_normal, Zeros
 from tensorflow.keras.regularizers import l2
 
 
+class BitWiseSeNet(tf.keras.layers.Layer):
+    def __init__(self, reduction_ratio=3, l2_reg=0.0, seed=1024, **kwargs):
+        self.reduction_ratio = reduction_ratio
+        self.l2_reg = l2_reg
+        self.seed = seed
+        super(BitWiseSeNet, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        if len(input_shape) != 2:
+            raise ValueError(f"Unexpected inputs dimensions {len(input_shape)}, expect to be 2 dimensions")
+        self.in_size = int(input_shape[-1])
+        reduction_size = max(1, self.in_size // self.reduction_ratio)
+
+        self.W_1 = self.add_weight(
+            shape=(self.in_size, reduction_size),
+            initializer=glorot_normal(seed=self.seed),
+            name="BitWiseSeNet_W_1",
+            trainable=True,
+        )
+        self.W_2 = self.add_weight(
+            shape=(reduction_size, self.in_size),
+            initializer=glorot_normal(seed=self.seed),
+            name="BitWiseSeNet_W_2",
+            trainable=True,
+        )
+
+        super(BitWiseSeNet, self).build(input_shape)
+
+    def call(self, inputs, training=None, **kwargs):
+        A_1 = tf.nn.relu(tf.matmul(inputs, self.W_1))  # [B, x]
+        A_2 = tf.nn.sigmoid(tf.matmul(A_1, self.W_2))  # [B, N]
+        output = inputs + tf.multiply(inputs, A_2)
+        return output
+
+    def get_config(self):
+        config = super(BitWiseSeNet, self).get_config()
+        config.update(
+            {
+                "reduction_ratio": self.reduction_ratio,
+                "l2_reg": self.l2_reg,
+                "seed": self.seed,
+            }
+        )
+        return config
+
+
 class SeNetLayer(tf.keras.layers.Layer):
     def __init__(self, reduction_ratio=3, l2_reg=0.0, seed=1024, **kwargs):
         super(SeNetLayer, self).__init__(**kwargs)
