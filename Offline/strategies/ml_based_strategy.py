@@ -67,7 +67,7 @@ class CustomMLStrategy(BaseStrategy):
             cash = min(cash, self.broker.getvalue() * self.params.max_cash_per_instrument)
             # 计算可以买多少股
             size = int(cash / data.close[0])
-            if size > self.params.min_size:
+            if size > self.params.min_size:  # 最少股数量
                 self.buy(data=data, size=size, exectype=bt.Order.Market)
                 # 更新持仓天数
                 self.holding_period[data._name] = 1
@@ -77,7 +77,6 @@ class CustomMLStrategy(BaseStrategy):
         for stock_code, holding_period in self.holding_period.items():
             data = self.getdatabyname(stock_code)
             model_pred_condition = (holding_period >= self.params.min_holding_period) and (stock_code in today_sell_stocks)
-            # model_pred_condition = stock_code in today_sell_stocks
             if model_pred_condition:
                 self.close(data=data, exectype=bt.Order.Market)
                 today_sell_position.append(stock_code)
