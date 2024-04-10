@@ -12,16 +12,20 @@ from copy import deepcopy
 class CustomMLStrategy(BaseStrategy):
     params = {
         "model_pred_dataframe": pd.DataFrame(),
-        "min_holding_period": 5,
-        "max_cash_per_instrument": 0.2,
-        "top_n": 5,
-        "min_size": 100,
+        "max_cash_per_instrument": 0.1,
+        "max_holding_period": 30,
+        "buy_top_n": 3,
+        "sell_top_n": 3,
+        "min_buy_size": 100,
+        "atr_period": 14,
+        "atr_risk": 0.1,
     }
 
     def __init__(self):
         super().__init__()  # 调用基础策略的初始化方法
-        # 计算股票的权重
-        self.stock_weights = [1 / math.log(i + 2) for i in range(self.params.top_n)]
+        self.atr = {data: bt.indicators.AverageTrueRange(deepcopy(data), period=self.params.atr_period) for data in self.datas}
+        # 计算TopBuyN股票的权重（非等权）
+        self.stock_weights = [1 / math.log(i + 2) for i in range(self.params.buy_top_n)]
         self.stock_weights = [w / sum(self.stock_weights) for w in self.stock_weights]  # Norm
         # 获取模型预测
         self.stock_for_buy, self.stock_for_sell = self.get_model_prediction()
@@ -30,16 +34,15 @@ class CustomMLStrategy(BaseStrategy):
     def get_model_prediction(self):
         def get_stock_for_buy(group):
             filtered_group = group[group["label_pred"] > 0.0]
-            top_n = filtered_group.nlargest(self.params.top_n, "label_pred")
+            top_n = filtered_group.nlargest(self.params.buy_top_n, "label_pred")
             return top_n.to_dict("records")
 
         def get_stock_for_sell(group):
             filtered_group = group[group["label_pred"] < 0.0]
-            bottom_n = filtered_group.nsmallest(self.params.top_n, "label_pred")
+            bottom_n = filtered_group.nsmallest(self.params.sell_top_n, "label_pred")
             return bottom_n.to_dict("records")
 
         model_prediction = self.params.model_pred_dataframe
-        model_prediction["stock_code"] = model_prediction["stock_code"].map(lambda x: str(x).zfill(6))
         stock_for_buy = model_prediction.groupby("datetime").apply(get_stock_for_buy).to_dict()
         stock_for_sell = model_prediction.groupby("datetime").apply(get_stock_for_sell).to_dict()
         return stock_for_buy, stock_for_sell
@@ -57,33 +60,29 @@ class CustomMLStrategy(BaseStrategy):
         # 获取当前可用现金
         current_cash = self.broker.getcash()
         print(f"current_cash: {current_cash}")
-        print(f"current_holding: {self.holding_period}")
+        print(f"current_position: {self.holding_period}")
 
-        # 遍历预定的买入股票
+        for data in self.getpositions():
+            position = self.getpositionbyname(data._name)
+            if position.size > 0:
+                sell_condition_1 = data._name in today_sell_stocks
+                sell_condition_2 = data.close[0] < position.price - 2 * self.atr[data][0]  # ATR止损
+                sell_condition_3 = self.holding_period.get(data._name, 0) > self.params.max_holding_period  # 最大持仓周期
+                final_sell_condition = sell_condition_1
+                if final_sell_condition:
+                    self.close(data=data, exectype=bt.Order.Market)
+
         for i, stock_code in enumerate(today_buy_stocks):
-            # 获取对应的数据
             data = self.getdatabyname(stock_code)
-            # 确定投资金额
-            cash = current_cash * self.stock_weights[i]
-            cash = min(cash, self.broker.getvalue() * self.params.max_cash_per_instrument)
-            # 计算可以买多少股
-            size = int(cash / data.close[0])
-            if size > self.params.min_size:  # 最少股数量
-                self.buy(data=data, size=size, exectype=bt.Order.Market)
-                # 更新持仓天数
-                self.holding_period[data._name] = 1
+            avaiable_cash = current_cash * self.stock_weights[i]
+            avaiable_cash = min(avaiable_cash, self.broker.getvalue() * self.params.max_cash_per_instrument)
+            size = int(avaiable_cash / data.close[0])
+            if self.atr[data][0] > 0:
+                size_atr = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])
+                size = min(size_atr, size)
+                if size > self.params.min_buy_size:  # 最少股数量
+                    self.buy(data=data, size=size, exectype=bt.Order.Market)
+                    self.holding_period[stock_code] = 1
 
-        # 检查是否需要卖出股票
-        today_sell_position = []
-        for stock_code, holding_period in self.holding_period.items():
-            data = self.getdatabyname(stock_code)
-            holding_period_condition = holding_period >= self.params.min_holding_period
-            model_pred_condition = stock_code in today_sell_stocks
-            if holding_period_condition and model_pred_condition:
-                self.close(data=data, exectype=bt.Order.Market)
-                today_sell_position.append(stock_code)
-            else:
-                self.holding_period[stock_code] += 1  # 更新持仓天数
-
-        for i in today_sell_stocks:
-            self.holding_period.pop(i, None)
+        for k, _ in self.holding_period.items():
+            self.holding_period[k] += 1
