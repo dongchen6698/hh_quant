@@ -11,8 +11,11 @@ class BaseStrategy(bt.Strategy):
         # 初始化数据 & 基准
         if self.params.benchmark is not None:
             print("启动基准对比...")
-            self.benchmark = self.getdatabyname(self.params.benchmark)  # 选择基准数据
-            self.datas = [data for data in self.datas if data._name != self.params.benchmark]  # 过滤基准数据
+            # self.benchmark = self.getdatabyname(self.params.benchmark)  # 选择基准数据
+            # self.datas = [data for data in self.datas if data._name != self.params.benchmark]  # 过滤基准数据
+
+            self.benchmark = self.datas[-1]
+            self.datas = self.datas[:-1]
             print(f"回测数据共: {len(self.datas)}")
 
         # 使用字典跟踪每个数据源的订单、买入价格和佣金

@@ -10,6 +10,15 @@ from copy import deepcopy
 
 
 class CustomMLStrategy(BaseStrategy):
+    """
+    该Base策略对齐BigQuant的量化交易策略
+    Args:
+        BaseStrategy (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
     params = {
         "model_pred_dataframe": pd.DataFrame(),
         "min_holding_period": 5,
@@ -74,17 +83,15 @@ class CustomMLStrategy(BaseStrategy):
                 self.holding_period[data._name] = 1
 
         # 检查是否需要卖出股票
-        today_sell_position = []
-        for stock_code, holding_period in self.holding_period.items():
-            data = self.getdatabyname(stock_code)
-            holding_period_condition = holding_period >= self.params.min_holding_period
-            model_pred_condition = stock_code in today_sell_stocks
-            # if holding_period_condition and model_pred_condition:
-            if model_pred_condition:
-                self.close(data=data, exectype=bt.Order.Market)
-                today_sell_position.append(stock_code)
-            else:
-                self.holding_period[stock_code] += 1  # 更新持仓天数
+        for data in self.getpositions():
+            position = self.getpositionbyname(data._name)
+            if position.size > 0:
+                holding_period_condition = self.holding_period[data._name] >= self.params.min_holding_period
+                model_pred_condition = data._name in today_sell_stocks
+                if holding_period_condition and model_pred_condition:
+                    self.close(data=data, exectype=bt.Order.Market)
+                    self.holding_period.pop(data._name, None)
 
-        for i in today_sell_stocks:
-            self.holding_period.pop(i, None)
+        # 更新持仓天数信息
+        for k in self.holding_period.keys():
+            self.holding_period[k] += 1

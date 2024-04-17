@@ -12,5 +12,4 @@
 # notebooks/
 __pycache__/
 logs/
-models/
 predicts/

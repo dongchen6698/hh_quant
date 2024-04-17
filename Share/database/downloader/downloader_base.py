@@ -1,9 +1,13 @@
 import pandas as pd
 from datetime import datetime
-
+import sys 
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
+# print(sys.path)
+import database_config as database_config
 
 class DownloaderBase:
-    def __init__(self, db_conn, db_config) -> None:
+    def __init__(self, db_conn, db_config:database_config) -> None:
         self.db_conn = db_conn
         self.db_config = db_config
 
@@ -24,6 +28,16 @@ class DownloaderBase:
         return dataframe
 
     def _download_stock_history_info(self, stock_code, start_date="19700101", end_date="20500101"):
+        """查询单只股票历史数据
+
+        Args:
+            stock_code (_type_): 股票代码
+            start_date (str, optional): 开始日期. Defaults to "19700101".
+            end_date (str, optional): 结束日期. Defaults to "20500101".
+
+        Returns:
+            _type_: pd.dataframe
+        """
         query = f"select * from {self.db_config.TABLE_STOCK_HISTORY_INFO} where stock_code = '{stock_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
@@ -44,6 +58,16 @@ class DownloaderBase:
         return dataframe
 
     def _download_index_history_info(self, index_code, start_date="19700101", end_date="20500101"):
+        """查询指数历史数据
+
+        Args:
+            index_code (_type_): 指数代码 例如：000905(中证500)
+            start_date (str, optional): _description_. Defaults to "19700101".
+            end_date (str, optional): _description_. Defaults to "20500101".
+
+        Returns:
+            _type_: pd.dataframe
+        """
         query = f"select * from {self.db_config.TABLE_INDEX_HISTORY_INFO} where index_code = '{index_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
