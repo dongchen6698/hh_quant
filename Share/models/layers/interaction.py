@@ -34,6 +34,7 @@ class BitWiseSeNet(tf.keras.layers.Layer):
     def call(self, inputs, training=False, **kwargs):
         A_1 = tf.nn.leaky_relu(tf.matmul(inputs, self.W_1))  # [B, x]
         A_2 = tf.nn.sigmoid(tf.matmul(A_1, self.W_2))  # [B, N]
+        # A_2 = tf.nn.leaky_relu(tf.matmul(A_1, self.W_2))  # [B, N]
         output = inputs + tf.multiply(inputs, A_2)
         return output
 

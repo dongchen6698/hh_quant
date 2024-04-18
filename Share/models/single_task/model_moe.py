@@ -63,8 +63,8 @@ class QuantModel(tf.keras.Model):
             seed=self.config.get("seed", 1024),
         )
 
-        self.wide_output_layer = tf.keras.layers.Dense(1, activation=None)
-        self.deep_output_layer = tf.keras.layers.Dense(1, activation=None)
+        self.wide_output_layer = tf.keras.layers.Dense(self.config.get("output_dim", 1), activation=None)
+        self.deep_output_layer = tf.keras.layers.Dense(self.config.get("output_dim", 1), activation=None)
 
     def get_sparse_dense_features(self, inputs):
         sparse_features = []  # list of [B, emb]

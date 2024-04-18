@@ -16,12 +16,13 @@ class CustomMLStrategy(BaseStrategy):
     Returns:
         _type_: _description_
     """
+
     params = {
         "model_pred_dataframe": pd.DataFrame(),
         "max_cash_per_instrument": 0.1,
         "max_holding_period": 30,
-        "buy_top_n": 10,
-        "sell_top_n": 10,
+        "buy_top_n": 3,
+        "sell_top_n": 3,
         "min_buy_size": 100,
         "atr_period": 14,
         "atr_risk": 0.1,
@@ -39,12 +40,12 @@ class CustomMLStrategy(BaseStrategy):
 
     def get_model_prediction(self):
         def get_stock_for_buy(group):
-            filtered_group = group[group["label_pred"] > 0.05]
+            filtered_group = group[group["label_pred"] > 0.0]
             top_n = filtered_group.nlargest(self.params.buy_top_n, "label_pred")
             return top_n.to_dict("records")
 
         def get_stock_for_sell(group):
-            filtered_group = group[group["label_pred"] < -0.05]
+            filtered_group = group[group["label_pred"] < 0.0]
             bottom_n = filtered_group.nsmallest(self.params.sell_top_n, "label_pred")
             return bottom_n.to_dict("records")
 
@@ -76,7 +77,7 @@ class CustomMLStrategy(BaseStrategy):
                 sell_condition_2 = data.close[0] > position.price + 3 * self.atr[data][0]  # ATR止盈
                 sell_condition_3 = data.close[0] < position.price - 2 * self.atr[data][0]  # ATR止损
                 sell_condition_4 = self.holding_period.get(data._name, 0) > self.params.max_holding_period  # 最大持仓周期
-                final_sell_condition = sell_condition_1 or sell_condition_2 or sell_condition_3 
+                final_sell_condition = sell_condition_1
                 if final_sell_condition:
                     if position.size < 100:
                         self.close(data=data, exectype=bt.Order.Market)
