@@ -52,7 +52,7 @@ class QuantModel(tf.keras.Model):
 
         # 自定义GatePart
         self.gates = []
-        for i in range(self.config.get("task_nums", 3)):
+        for i in range(self.config.get("task_nums", 2)):
             gate_part = tf.keras.layers.Dense(
                 self.config.get("expert_nums", 6),
                 activation=tf.nn.sigmoid,
@@ -61,7 +61,7 @@ class QuantModel(tf.keras.Model):
 
         # 自定义taskTowerPart
         self.task_towers = []
-        for i in range(self.config.get("task_nums", 3)):
+        for i in range(self.config.get("task_nums", 2)):
             task_tower = DnnLayer(
                 hidden_units=self.config.get("dnn_hidden_units", [64, 32]),
                 activation=self.config.get("dnn_activation", "relu"),
@@ -73,12 +73,16 @@ class QuantModel(tf.keras.Model):
             self.task_towers.append(task_tower)
 
         # 自定义taskOutputPart
-        self.task_outputs = []
-        for i in range(self.config.get("task_nums", 3)):
-            task_output = tf.keras.layers.Dense(1, activation=None, name=f"output_{i+1}")
-            self.task_outputs.append(task_output)
+        self.deep_outputs = [
+            tf.keras.layers.Dense(3, activation=None, name=f"deep_output_cls"),
+            tf.keras.layers.Dense(1, activation=None, name=f"deep_output_reg"),
+        ]
 
-        self.wide_output_layer = tf.keras.layers.Dense(1, activation=None)
+        # 定义Wide层
+        self.wide_outputs = [
+            tf.keras.layers.Dense(3, activation=None, name="wide_output_cls"),
+            tf.keras.layers.Dense(1, activation=None, name="wide_output_reg"),
+        ]
 
     def get_sparse_dense_features(self, inputs):
         sparse_features = []  # list of [B, emb]
@@ -102,21 +106,22 @@ class QuantModel(tf.keras.Model):
         dense_emb = tf.stack(dense_features, axis=-1)
         sparse_emb = tf.concat(sparse_features, axis=-1)
 
-        # Wide..........................................................................................
-        wide_logit = self.wide_output_layer(dense_emb)
-
         # Deep..........................................................................................
         output_logits = []
         deep_input = tf.concat([sparse_emb, dense_emb], axis=-1)
         expert_outputs = [expert(deep_input) for expert in self.experts]
         expert_output = tf.stack(expert_outputs, axis=1)  # [B, expert_nums, dim]
-        for i in range(self.config.get("task_nums", 3)):
+        for i in range(self.config.get("task_nums", 2)):
+            # 构建Deep侧输出
             gate_output = self.gates[i](deep_input)
             gate_output = tf.expand_dims(gate_output, axis=-1)  # [B, dim, 1]
             deep_output = tf.multiply(gate_output, expert_output)  # [B, expert_nums, dim]
             deep_output = tf.keras.layers.Flatten()(deep_output)  # [B, expert_nums * dim]
             deep_output = self.task_towers[i](deep_output)  # [B, dim]
-            deep_logit = self.task_outputs[i](deep_output)
+            deep_logit = self.deep_outputs[i](deep_output)
+            # 构建Wide侧输出
+            wide_logit = self.wide_outputs[i](deep_input)
+            # 汇总最后输出
             output_logits.append(deep_logit + wide_logit)
         # Output........................................................................................
         return output_logits
