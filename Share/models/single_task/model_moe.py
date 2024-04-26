@@ -28,6 +28,8 @@ class QuantModel(tf.keras.Model):
                 name=f"{feature_name}_embedding",
             )
 
+        self.flatten_layer = tf.keras.layers.Flatten()
+
         # 自定义层相关
         self.experts = []
         for i in range(self.config.get("expert_nums", 3)):
@@ -51,7 +53,7 @@ class QuantModel(tf.keras.Model):
             self.experts.append(expert_part)
         self.gate = tf.keras.layers.Dense(
             self.config.get("expert_nums", 3),
-            activation=self.config.get("gate_activation", "softmax"),
+            activation=tf.nn.softmax,
         )
 
         self.output_tower = DnnLayer(
@@ -76,7 +78,7 @@ class QuantModel(tf.keras.Model):
                 encode_feature = embedding_layer(lookup_layer(feature_value))
                 sparse_features.append(encode_feature)
             else:
-                dense_features.append(feature_value)
+                dense_features.append(tf.expand_dims(feature_value, axis=-1))
         return sparse_features, dense_features
 
     def call(self, inputs, training=False):
@@ -85,7 +87,7 @@ class QuantModel(tf.keras.Model):
 
         # 处理Deep侧特征
         sparse_features, dense_features = self.get_sparse_dense_features(inputs)
-        dense_emb = tf.stack(dense_features, axis=-1)
+        dense_emb = tf.concat(dense_features, axis=-1)
         sparse_emb = tf.concat(sparse_features, axis=-1)
 
         # Wide..........................................................................................
@@ -98,7 +100,7 @@ class QuantModel(tf.keras.Model):
         gate_output = self.gate(deep_input)  # [B, expert_nums]
         gate_output = tf.expand_dims(gate_output, axis=-1)  # [B, expert_nums, 1]
         deep_output = tf.multiply(gate_output, expert_output)  # [B, expert_nums, dim]
-        deep_output = tf.keras.layers.Flatten()(deep_output)  # [B, expert_nums * dim]
+        deep_output = tf.reduce_sum(deep_output, axis=1, keepdims=False)  # [B, dim]
         deep_output = self.output_tower(deep_output)  # [B, dim]
         deep_logit = self.deep_output_layer(deep_output)  # [B, 1]
 

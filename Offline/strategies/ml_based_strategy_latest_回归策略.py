@@ -7,16 +7,6 @@ from copy import deepcopy
 
 
 class CustomMLStrategy(BaseStrategy):
-    """_summary_
-        * 1. 如何动态调整每日买入卖出数量？根据模型预测概率or其他
-        * 2. 如何更高效的应用资金管理策略？凯利公式？
-        * 3. 止盈止损逻辑 + 打散策略（多元化、行业打散等）
-    Args:
-        BaseStrategy (_type_): _description_
-    Returns:
-        _type_: _description_
-    """
-
     params = {
         "model_pred_dataframe": pd.DataFrame(),
         "max_cash_per_instrument": 0.1,

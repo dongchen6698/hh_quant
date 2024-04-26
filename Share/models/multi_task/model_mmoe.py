@@ -28,9 +28,11 @@ class QuantModel(tf.keras.Model):
                 name=f"{feature_name}_embedding",
             )
 
+        self.flatten_layer = tf.keras.layers.Flatten()
+
         # 自定义ExpertPart
         self.experts = []
-        for i in range(self.config.get("expert_nums", 6)):
+        for i in range(self.config.get("expert_nums", 3)):
             expert_part = tf.keras.Sequential(
                 [
                     BitWiseSeNet(
@@ -54,8 +56,8 @@ class QuantModel(tf.keras.Model):
         self.gates = []
         for i in range(self.config.get("task_nums", 2)):
             gate_part = tf.keras.layers.Dense(
-                self.config.get("expert_nums", 6),
-                activation=tf.nn.sigmoid,
+                self.config.get("expert_nums", 3),
+                activation=tf.nn.softmax,
             )
             self.gates.append(gate_part)
 
@@ -94,7 +96,7 @@ class QuantModel(tf.keras.Model):
                 encode_feature = embedding_layer(lookup_layer(feature_value))
                 sparse_features.append(encode_feature)
             else:
-                dense_features.append(feature_value)
+                dense_features.append(tf.expand_dims(feature_value, axis=-1))
         return sparse_features, dense_features
 
     def call(self, inputs, training=False):
@@ -103,27 +105,40 @@ class QuantModel(tf.keras.Model):
 
         # 处理Deep侧特征
         sparse_features, dense_features = self.get_sparse_dense_features(inputs)
-        dense_emb = tf.stack(dense_features, axis=-1)
+        dense_emb = tf.concat(dense_features, axis=-1)
         sparse_emb = tf.concat(sparse_features, axis=-1)
 
+        # Wide..........................................................................................
+        output_wide_logits = []
+        for i in range(self.config.get("task_nums", 2)):
+            wide_logit = self.wide_outputs[i](dense_emb)
+            output_wide_logits.append(wide_logit)
+
         # Deep..........................................................................................
-        output_logits = []
         deep_input = tf.concat([sparse_emb, dense_emb], axis=-1)
         expert_outputs = [expert(deep_input) for expert in self.experts]
         expert_output = tf.stack(expert_outputs, axis=1)  # [B, expert_nums, dim]
-        for i in range(self.config.get("task_nums", 2)):
-            # 构建Deep侧输出
-            gate_output = self.gates[i](deep_input)
-            gate_output = tf.expand_dims(gate_output, axis=-1)  # [B, dim, 1]
-            deep_output = tf.multiply(gate_output, expert_output)  # [B, expert_nums, dim]
-            deep_output = tf.keras.layers.Flatten()(deep_output)  # [B, expert_nums * dim]
-            deep_output = self.task_towers[i](deep_output)  # [B, dim]
-            deep_logit = self.deep_outputs[i](deep_output)
-            # 构建Wide侧输出
-            wide_logit = self.wide_outputs[i](deep_input)
-            # 汇总最后输出
-            output_logits.append(deep_logit + wide_logit)
+        output_deep_logits = []
+        # 处理分类任务
+        cls_gate_output = self.gates[0](deep_input)
+        cls_gate_output = tf.expand_dims(cls_gate_output, axis=-1)  # [B, dim, 1]
+        cls_deep_output = tf.multiply(cls_gate_output, expert_output)  # [B, expert_nums, dim]
+        cls_deep_output = tf.reduce_sum(cls_deep_output, axis=1, keepdims=False)
+        cls_deep_output = self.task_towers[0](cls_deep_output)  # [B, dim]
+        cls_deep_logit = self.deep_outputs[0](cls_deep_output)
+        output_deep_logits.append(cls_deep_logit)
+        # 处理回归任务
+        reg_gate_output = self.gates[1](deep_input)
+        reg_gate_output = tf.expand_dims(reg_gate_output, axis=-1)  # [B, dim, 1]
+        reg_deep_output = tf.multiply(reg_gate_output, expert_output)  # [B, expert_nums, dim]
+        reg_deep_output = tf.reduce_sum(reg_deep_output, axis=1, keepdims=False)
+        reg_deep_output = self.task_towers[1](reg_deep_output)  # [B, dim]
+        reg_deep_output = tf.concat([reg_deep_output, cls_deep_logit], axis=-1)  # [B, dim + 1], 回归任务依赖分类任务
+        reg_deep_logit = self.deep_outputs[1](reg_deep_output)
+        output_deep_logits.append(reg_deep_logit)
+
         # Output........................................................................................
+        output_logits = [deep_logit + wide_logit for deep_logit, wide_logit in zip(output_deep_logits, output_wide_logits)]
         return output_logits
 
     def get_config(self):
