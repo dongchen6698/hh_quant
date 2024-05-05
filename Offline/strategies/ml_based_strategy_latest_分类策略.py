@@ -18,7 +18,6 @@ class CustomMLStrategy(BaseStrategy):
         "atr_take_profit_factor": 3,  # ATR止盈因子
         "atr_stop_loss_factor": 2,  # ATR止损因子
         "atr_risk": 0.1,  # ATR风险系数
-        "label_pred_threshold": 0.0,  # 人工定义的预测threshold
     }
 
     def __init__(self):
@@ -31,8 +30,8 @@ class CustomMLStrategy(BaseStrategy):
 
     def get_model_prediction(self):
         def get_stock_for_buy(group):
-            group = group[group["label_pred"] > self.params.label_pred_threshold]
-            top_n = group.nlargest(self.params.top_n, "label_pred")
+            group = group[group["label_pred"] == 1]
+            top_n = group.nlargest(self.params.top_n, "label_prob")
             return top_n.to_dict("records")
 
         model_prediction = self.params.model_pred_dataframe

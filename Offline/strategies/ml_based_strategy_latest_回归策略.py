@@ -58,16 +58,20 @@ class CustomMLStrategy(BaseStrategy):
                 sell_condition_1 = data.high[0] > position.price + self.params.atr_take_profit_factor * self.atr[data][0]  # ATR止盈
                 sell_condition_2 = data.low[0] < position.price - self.params.atr_stop_loss_factor * self.atr[data][0]  # ATR止损
                 sell_condition_3 = self.holding_period.get(data._name, 0) >= self.params.max_holding_period  # 最大持仓周期
-                if sell_condition_1:  # 如果满足止盈则阶梯式卖出
-                    position_value = self.broker.get_value(datas=[data])
-                    if position_value > self.params.min_buy_cash:
-                        self.sell(data=data, size=position.size // 2, exectype=bt.Order.Market)
-                    else:
-                        self.close(data=data, exectype=bt.Order.Market)
-                        self.holding_period.pop(data._name, None)
-                elif sell_condition_2 or sell_condition_3:  # 如果满足止损或最大持仓周期，则直接平仓
+                if sell_condition_1 or sell_condition_2 or sell_condition_3:
                     self.close(data=data, exectype=bt.Order.Market)
                     self.holding_period.pop(data._name, None)
+
+                # if sell_condition_1:  # 如果满足止盈则阶梯式卖出
+                #     position_value = self.broker.get_value(datas=[data])
+                #     if position_value > self.params.min_buy_cash:
+                #         self.sell(data=data, size=position.size // 2, exectype=bt.Order.Market)
+                #     else:
+                #         self.close(data=data, exectype=bt.Order.Market)
+                #         self.holding_period.pop(data._name, None)
+                # elif sell_condition_2 or sell_condition_3:  # 如果满足止损或最大持仓周期，则直接平仓
+                #     self.close(data=data, exectype=bt.Order.Market)
+                #     self.holding_period.pop(data._name, None)
 
         # 买入操作
         if len(today_buy_stocks) > 0:
@@ -86,7 +90,7 @@ class CustomMLStrategy(BaseStrategy):
                 else:
                     # 确保不超过总资产的10%
                     avaiable_cash = min(avaiable_cash, max_position_value)  # 选择最终可用金额
-                if avaiable_cash >= self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
+                if avaiable_cash > self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
                     if self.atr[data][0] > 0:
                         # 计算size
                         base_size = int(avaiable_cash / data.close[0])  # 计算可用金额下的size

@@ -20,10 +20,11 @@ class BaoStockUploader:
 
     def _upload_stock_history_info(self, table_name=None):
         if table_name:
-            existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+            stock_code_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+            datetime_check = set(pd.read_sql_query(f"select distinct datetime from {table_name}", self.db_conn)["datetime"].tolist())
             print(f"开始上传【股票-行情数据】数据到【{table_name}】")
             for stock_code, stock_name, stock_prefix in tqdm(self.db_downloader._download_stock_base_info().to_records(index=False)):
-                if stock_code not in existing_check:
+                if (stock_code not in stock_code_check) or (self.start_date not in datetime_check):
                     try:
                         stock_info = bs.query_history_k_data_plus(
                             code=stock_prefix + "." + stock_code,
@@ -64,10 +65,11 @@ class BaoStockUploader:
 
     def _upload_stock_indicator_info(self, table_name):
         if table_name:
-            existing_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+            stock_code_check = set(pd.read_sql_query(f"select distinct stock_code from {table_name}", self.db_conn)["stock_code"].tolist())
+            datetime_check = set(pd.read_sql_query(f"select distinct datetime from {table_name}", self.db_conn)["datetime"].tolist())
             print(f"开始上传【个股指标】数据到【{table_name}】")
             for stock_code, stock_name, stock_prefix in tqdm(self.db_downloader._download_stock_base_info().to_records(index=False)):
-                if stock_code not in existing_check:
+                if (stock_code not in stock_code_check) or (self.start_date not in datetime_check):
                     try:
                         stock_info = bs.query_history_k_data_plus(
                             code=stock_prefix + "." + stock_code,
@@ -101,10 +103,11 @@ class BaoStockUploader:
         if table_name:
             # sh.000016 上证50，sh.000300 沪深300，sh.000905 中证500
             default_index_code_list = ["sh.000016", "sh.000300", "sh.000905"]
-            existing_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
+            index_code_check = set(pd.read_sql_query(f"select distinct index_code from {table_name}", self.db_conn)["index_code"].tolist())
+            datetime_check = set(pd.read_sql_query(f"select distinct datetime from {table_name}", self.db_conn)["datetime"].tolist())
             print(f"开始上传【指数-历史数据】数据到【{table_name}】")
             for index_code in default_index_code_list:
-                if index_code.split(".")[1] not in existing_check:
+                if (index_code.split(".")[1] not in index_code_check) or (self.start_date not in datetime_check):
                     try:
                         index_info = bs.query_history_k_data_plus(
                             code=index_code,

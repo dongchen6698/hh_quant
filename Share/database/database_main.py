@@ -48,12 +48,12 @@ def init_database_data(start_date="20000101", end_date="20231231"):
     uploader_bs = BaoStockUploader(db_conn=conn, db_downloader=downloader, start_date=start_date, end_date=end_date)
     # 开始下载数据(Akshare)
     uploader_ak._upload_stock_trade_date(table_name=config.TABLE_STOCK_TRADE_DATA_INFO)  # 交易日历数据
-    uploader_ak._upload_stock_base_info(table_name=config.TABLE_STOCK_BASE_INFO)  # 股票代码列表
-    uploader_ak._upload_stock_individual_info(table_name=config.TABLE_STOCK_INDIVIDUAL_INFO)  # 个股基础数据
+    # uploader_ak._upload_stock_base_info(table_name=config.TABLE_STOCK_BASE_INFO)  # 股票代码列表
+    # uploader_ak._upload_stock_individual_info(table_name=config.TABLE_STOCK_INDIVIDUAL_INFO)  # 个股基础数据
     # # 开始下载数据(Baostock)
     uploader_bs._bs_login()  # 登陆系统
-    uploader_bs._upload_stock_history_info(table_name=config.TABLE_STOCK_HISTORY_INFO)  # 个股历史数据
-    uploader_bs._upload_stock_indicator_info(table_name=config.TABLE_STOCK_INDICATOR_INFO)  # 个股指标信息
+    # uploader_bs._upload_stock_history_info(table_name=config.TABLE_STOCK_HISTORY_INFO)  # 个股历史数据
+    # uploader_bs._upload_stock_indicator_info(table_name=config.TABLE_STOCK_INDICATOR_INFO)  # 个股指标信息
     uploader_bs._upload_index_history_info(table_name=config.TABLE_INDEX_HISTORY_INFO)  # 指数历史数据
     uploader_bs._bs_logout()  # 登出系统
     # --------------------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # parser.add_argument('--update','-n',type=str, default = "bk",required=True,help="a programmer's name")
     # args = parser.parse_args()
 
-    online_update = False
+    online_update = True
     # 初始化数据库
     init_database()
     # 初始化数据表
@@ -78,12 +78,11 @@ if __name__ == "__main__":
         init_database_data(start_date="20000101", end_date="20231231")
     else:
         # 还需要继续优化
-        # db_conn = sqlite3.connect(config.DATABASE_PATH)
-        # db_downloader = DownloaderBase(db_conn=db_conn, db_config=config)
-        # last_date = datetime.strptime(db_downloader._download_stock_trade_date()["datetime"].max(), "%Y-%m-%d")
-        # update_start_date = datetime.strftime(last_date + timedelta(days=1), "%Y%m%d")
-        # update_end_date = datetime.strftime(datetime.now(), "%Y%m%d")
-        # # 更新数据
-        # print(f"Update start date: {update_start_date}, Update end date: {update_end_date}")
-        # init_database_data(start_date=update_start_date, end_date=update_end_date)
-        pass
+        db_conn = sqlite3.connect(config.DATABASE_PATH)
+        db_downloader = DownloaderBase(db_conn=db_conn, db_config=config)
+        last_date = datetime.strptime(db_downloader._download_stock_trade_date()["datetime"].max(), "%Y-%m-%d")
+        update_start_date = datetime.strftime(last_date + timedelta(days=1), "%Y%m%d")
+        update_end_date = datetime.strftime(datetime.now(), "%Y%m%d")
+        # 更新数据
+        print(f"Update start date: {update_start_date}, Update end date: {update_end_date}")
+        init_database_data(start_date=update_start_date, end_date=update_end_date)
