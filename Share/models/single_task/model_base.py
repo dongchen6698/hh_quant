@@ -54,7 +54,7 @@ class QuantModel(tf.keras.Model):
                 dense_features.append(feature_value)
         return sparse_features, dense_features
 
-    def call(self, inputs, training=False):
+    def call(self, inputs):
         if not isinstance(inputs, dict):
             raise ValueError("The inputs to the model should be a dictionary where keys are feature names.")
 
@@ -68,7 +68,7 @@ class QuantModel(tf.keras.Model):
 
         # Deep..........................................................................................
         deep_input = tf.concat([sparse_emb, dense_emb], axis=-1)
-        deep_output = self.dnn_layer(deep_input, training=training)
+        deep_output = self.dnn_layer(deep_input)
         deep_logit = self.deep_output_layer(deep_output)
 
         # Output........................................................................................

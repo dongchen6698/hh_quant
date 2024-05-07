@@ -31,7 +31,7 @@ class BitWiseSeNet(tf.keras.layers.Layer):
 
         super(BitWiseSeNet, self).build(input_shape)
 
-    def call(self, inputs, training=False, **kwargs):
+    def call(self, inputs):
         A_1 = tf.nn.leaky_relu(tf.matmul(inputs, self.W_1))  # [B, x]
         A_2 = tf.nn.sigmoid(tf.matmul(A_1, self.W_2))  # [B, N]
         # A_2 = tf.nn.leaky_relu(tf.matmul(A_1, self.W_2))  # [B, N]
@@ -79,7 +79,7 @@ class SeNetLayer(tf.keras.layers.Layer):
         # Be sure to call this somewhere!
         super(SeNetLayer, self).build(input_shape)
 
-    def call(self, inputs, training=False):
+    def call(self, inputs):
         Z = tf.reduce_mean(inputs, axis=-1)  # [B, N]
         A_1 = tf.nn.relu(tf.matmul(Z, self.W_1))  # [B, x]
         A_2 = tf.nn.sigmoid(tf.matmul(A_1, self.W_2))  # [B, N]
@@ -107,7 +107,7 @@ class FMLayer(tf.keras.layers.Layer):
             raise ValueError(f"Unexpected inputs dimensions {len(input_shape)},expect to be 3 dimensions")
         super(FMLayer, self).build(input_shape)  # Be sure to call this somewhere!
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         concated_embeds_value = inputs
         square_of_sum = tf.square(tf.reduce_sum(concated_embeds_value, axis=1, keepdims=True))
         sum_of_square = tf.reduce_sum(concated_embeds_value * concated_embeds_value, axis=1, keepdims=True)
@@ -176,7 +176,7 @@ class CrossNetLayer(tf.keras.layers.Layer):
         # Be sure to call this somewhere!
         super(CrossNetLayer, self).build(input_shape)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         x0 = tf.expand_dims(inputs, -1)  # [B, dim, 1]
         xi = x0  # xi: 上一层的输出[B, dim, 1], 初始化xi=x0
         for i in range(self.layer_num):
@@ -242,7 +242,7 @@ class CINLayer(tf.keras.layers.Layer):
         # Be sure to call this somewhere!
         super(CINLayer, self).build(input_shape)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         # The inputs here should be a 3D tensor with shape (batch_size, field_num, embedding_size)
         cin_results = [inputs]
         for layer_idx in range(len(self.cin_size)):

@@ -13,6 +13,7 @@ class DnnLayer(tf.keras.layers.Layer):
         self.l2_reg = l2_reg
         self.seed = seed
         self.dense_layers = []
+        self.activation_layers = []
         self.dropout_layers = []
         self.bn_layers = []
 
@@ -21,28 +22,29 @@ class DnnLayer(tf.keras.layers.Layer):
             self.dense_layers.append(
                 tf.keras.layers.Dense(
                     units=units,
-                    activation=self.activation,
+                    activation=None,  # 移除激活函数
                     kernel_initializer=glorot_normal(seed=self.seed + index),
                     bias_initializer=Zeros(),
                     kernel_regularizer=l2(self.l2_reg),
                 )
             )
+            # 激活函数作为单独一层
+            self.activation_layers.append(tf.keras.activations.get(self.activation))
             if self.use_bn:
                 self.bn_layers.append(tf.keras.layers.BatchNormalization())
-
             self.dropout_layers.append(tf.keras.layers.Dropout(rate=self.dropout_rate, seed=self.seed + index))
 
-        # Be sure to call this somewhere!
         super(DnnLayer, self).build(input_shape)
 
-    def call(self, inputs, training=None):
-        # print(f"Dnn Is Training Mode: {training}")
+    def call(self, inputs):
         x = inputs
         for i in range(len(self.hidden_units)):
             x = self.dense_layers[i](x)
             if self.use_bn:
-                x = self.bn_layers[i](x, training=training)
-            x = self.dropout_layers[i](x, training=training)
+                x = self.bn_layers[i](x)
+            # 激活函数应用在BN之后，或直接在Dense之后（如果没有BN）
+            x = self.activation_layers[i](x)
+            x = self.dropout_layers[i](x)
         return x
 
     def get_config(self):

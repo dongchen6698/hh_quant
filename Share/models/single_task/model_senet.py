@@ -63,7 +63,7 @@ class QuantModel(tf.keras.Model):
                 dense_features.append(feature_value)
         return sparse_features, dense_features
 
-    def call(self, inputs, training=False):
+    def call(self, inputs):
         if not isinstance(inputs, dict):
             raise ValueError("The inputs to the model should be a dictionary where keys are feature names.")
 

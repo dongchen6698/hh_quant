@@ -106,4 +106,6 @@ if __name__ == '__main__':
         backtest_adjust=ADJUST_NONE,
         backtest_initial_cash=10000000,
         backtest_commission_ratio=0.0001,
-        backtest_slippage_ratio=0.0001)
+        backtest_slippage_ratio=0.0001,
+        serv_addr="192.168.0.36:7001"
+        )

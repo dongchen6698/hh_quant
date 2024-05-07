@@ -71,7 +71,7 @@ class QuantModel(tf.keras.Model):
                         seed=self.config.get("seed", 1024) + i,
                     ),
                     DnnLayer(
-                        hidden_units=self.config.get("dnn_hidden_units", [64, 32]),
+                        hidden_units=self.config.get("dnn_hidden_units", [128, 64]),
                         activation=self.config.get("dnn_activation", "relu"),
                         dropout_rate=self.config.get("dnn_dropout", 0.3),
                         use_bn=self.config.get("dnn_use_bn", True),
@@ -87,7 +87,7 @@ class QuantModel(tf.keras.Model):
         )
 
         self.output_tower = DnnLayer(
-            hidden_units=self.config.get("dnn_hidden_units", [64, 32]),
+            hidden_units=self.config.get("dnn_hidden_units", [128, 64]),
             activation=self.config.get("dnn_activation", "relu"),
             dropout_rate=self.config.get("dnn_dropout", 0.3),
             use_bn=self.config.get("dnn_use_bn", True),
@@ -116,7 +116,7 @@ class QuantModel(tf.keras.Model):
                 dense_features.append(tf.expand_dims(feature_value, axis=-1))
         return sparse_features, dense_features
 
-    def call(self, inputs, training=False):
+    def call(self, inputs):
         if not isinstance(inputs, dict):
             raise ValueError("The inputs to the model should be a dictionary where keys are feature names.")
 
