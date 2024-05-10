@@ -14,20 +14,20 @@ class QuantModel(tf.keras.Model):
         else:
             self.lookup_output_mode = "one_hot"
 
-        # 创建连续特征的查找层和嵌入层
-        for feature_name, boundaries in self.config.get("numeric_features_with_boundaries").items():
-            self.lookup_layers[feature_name] = tf.keras.layers.Discretization(
-                bin_boundaries=boundaries,
-                output_mode=self.lookup_output_mode,
-                name=f"{feature_name}_lookup",
-            )
-            if self.config.get("feature_use_embedding"):
-                self.embedding_layers[feature_name] = tf.keras.layers.Embedding(
-                    input_dim=len(boundaries) + 1,
-                    output_dim=self.config.get("feature_embedding_dims", 4),
-                    embeddings_initializer=tf.keras.initializers.glorot_normal(self.config.get("seed", 1024)),
-                    name=f"{feature_name}_embedding",
-                )
+        # # 创建连续特征的查找层和嵌入层
+        # for feature_name, boundaries in self.config.get("numeric_features_with_boundaries").items():
+        #     self.lookup_layers[feature_name] = tf.keras.layers.Discretization(
+        #         bin_boundaries=boundaries,
+        #         output_mode=self.lookup_output_mode,
+        #         name=f"{feature_name}_lookup",
+        #     )
+        #     if self.config.get("feature_use_embedding"):
+        #         self.embedding_layers[feature_name] = tf.keras.layers.Embedding(
+        #             input_dim=len(boundaries) + 1,
+        #             output_dim=self.config.get("feature_embedding_dims", 4),
+        #             embeddings_initializer=tf.keras.initializers.glorot_normal(self.config.get("seed", 1024)),
+        #             name=f"{feature_name}_embedding",
+        #         )
 
         # 创建整数特征的查找层和嵌入层
         for feature_name, vocab in self.config.get("integer_categorical_features_with_vocab").items():
@@ -71,7 +71,7 @@ class QuantModel(tf.keras.Model):
                         seed=self.config.get("seed", 1024) + i,
                     ),
                     DnnLayer(
-                        hidden_units=self.config.get("dnn_hidden_units", [128, 64]),
+                        hidden_units=self.config.get("dnn_hidden_units", [64, 32]),
                         activation=self.config.get("dnn_activation", "relu"),
                         dropout_rate=self.config.get("dnn_dropout", 0.3),
                         use_bn=self.config.get("dnn_use_bn", True),
@@ -87,7 +87,7 @@ class QuantModel(tf.keras.Model):
         )
 
         self.output_tower = DnnLayer(
-            hidden_units=self.config.get("dnn_hidden_units", [128, 64]),
+            hidden_units=self.config.get("dnn_hidden_units", [64, 32]),
             activation=self.config.get("dnn_activation", "relu"),
             dropout_rate=self.config.get("dnn_dropout", 0.3),
             use_bn=self.config.get("dnn_use_bn", True),
