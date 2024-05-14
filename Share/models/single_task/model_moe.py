@@ -1,5 +1,5 @@
 import tensorflow as tf
-from ..layers import DnnLayer, BitWiseSeNet
+from ..layers import DnnLayer, BitWiseSeNet, CrossNetLayer
 
 
 class QuantModel(tf.keras.Model):

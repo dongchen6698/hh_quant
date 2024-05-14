@@ -7,5 +7,5 @@ TABLE_HISTORY_INDICATOR_INFO = "hh_quant_history_indicator_info"
 TABLE_HISTORY_TRADE_DATE_INFO = "hh_quant_history_trade_date_info"
 
 # Factor特征数据表关系
-TABLE_HISTORY_FACTOR_DATE_INFO = "hh_quant_alpha_factor_date_info"
-TABLE_HISTORY_FACTOR_OLHCV_INFO = "hh_quant_alpha_factor_179_info"
+TABLE_HISTORY_DATE_FACTOR_INFO = "hh_quant_history_date_factor_info"
+TABLE_HISTORY_ALPHA158_FACTOR_INFO = "hh_quant_history_alpha158_factor_info"

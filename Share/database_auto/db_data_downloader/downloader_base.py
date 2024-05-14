@@ -8,58 +8,63 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # print(sys.path)
 import database_config as database_config
 
+"""
+# 固定信息表（定期更新）
+TABLE_ALL_STOCK_INFO = "hh_quant_all_stock_info"
+
+# 数据库表映射关系
+TABLE_HISTORY_BASE_INFO = "hh_quant_history_base_info"
+TABLE_HISTORY_INDICATOR_INFO = "hh_quant_history_indicator_info"
+TABLE_HISTORY_TRADE_DATE_INFO = "hh_quant_history_trade_date_info"
+
+# Factor特征数据表关系
+TABLE_HISTORY_DATE_FACTOR_INFO = "hh_quant_history_date_factor_info"
+TABLE_HISTORY_ALPHA158_FACTOR_INFO = "hh_quant_history_alpha158_factor_info"
+"""
+
 
 class DownloaderBase:
     def __init__(self, db_conn, db_config: database_config) -> None:
         self.db_conn = db_conn
         self.db_config = db_config
 
-    def _download_stock_trade_date(self):
-        query = f"select * from {self.db_config.TABLE_HISTORY_TRADE_DATE_INFO};"
-        dataframe = pd.read_sql_query(query, self.db_conn)
-        return dataframe
-
     def _download_all_stock_info(self):
         query = f"select * from {self.db_config.TABLE_ALL_STOCK_INFO};"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_stock_base_info(self, stock_code=None):
-        if stock_code is None:
-            query = f"select * from {self.db_config.TABLE_STOCK_BASE_INFO};"
+    def _download_history_base_info(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = f"select * from {self.db_config.TABLE_HISTORY_BASE_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
+    def _download_history_indicator_info(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = f"select * from {self.db_config.TABLE_HISTORY_INDICATOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
+    def _download_history_trade_date(self, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = f"select * from {self.db_config.TABLE_HISTORY_TRADE_DATE_INFO} where datetime between '{start_date}' and '{end_date}';"
         else:
-            query = f"select * from {self.db_config.TABLE_STOCK_BASE_INFO} where stock_code = '{stock_code}';"
+            query = f"select * from {self.db_config.TABLE_HISTORY_TRADE_DATE_INFO};"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_stock_history_info(self, stock_code, start_date="19700101", end_date="20500101"):
-        query = f"select * from {self.db_config.TABLE_STOCK_HISTORY_INFO} where stock_code = '{stock_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
+    # ======================================
+
+    def _download_history_date_factor_info(self, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = f"select * from {self.db_config.TABLE_HISTORY_DATE_FACTOR_INFO} where datetime between '{start_date}' and '{end_date}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_stock_factor_date_info(self):
-        query = f"select * from {self.db_config.TABLE_STOCK_FACTOR_DATE_INFO};"
+    def _download_history_alpha158_factor_info(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = (
+                f"select * from {self.db_config.TABLE_HISTORY_ALPHA158_FACTOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+            )
         dataframe = pd.read_sql_query(query, self.db_conn)
-        return dataframe
-
-    def _download_stock_factor_qlib_info(self, stock_code, start_date="19700101", end_date="20500101"):
-        query = f"select * from {self.db_config.TABLE_STOCK_FACTOR_QLIB_INFO} where stock_code = '{stock_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
-        dataframe = pd.read_sql_query(query, self.db_conn)
-        return dataframe
-
-    def _download_stock_individual_info(self, stock_code):
-        query = f"select * from {self.db_config.TABLE_STOCK_INDIVIDUAL_INFO} where stock_code='{stock_code}';"
-        dataframe = pd.read_sql_query(query, self.db_conn)
-        return dataframe
-
-    def _download_index_history_info(self, index_code, start_date="19700101", end_date="20500101"):
-        query = f"select * from {self.db_config.TABLE_INDEX_HISTORY_INFO} where index_code = '{index_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
-        dataframe = pd.read_sql_query(query, self.db_conn)
-        return dataframe
-
-    def _download_stock_indicator_info(self, stock_code, start_date="19700101", end_date="20500101"):
-        query = f"select * from {self.db_config.TABLE_STOCK_INDICATOR_INFO} where stock_code = '{stock_code}' and datetime between '{self._transfer_datetime(start_date)}' and '{self._transfer_datetime(end_date)}';"
-        dataframe = pd.read_sql_query(query, self.db_conn)
-        for col in ["pe_ttm", "ps_ttm", "pcf_ncf_ttm", "pb_mrq"]:
-            dataframe[col] = pd.to_numeric(dataframe[col], errors="coerce")
         return dataframe

@@ -56,17 +56,24 @@ if __name__ == "__main__":
         db_downloader = DownloaderBase(db_conn=db_conn, db_config=config)
         # 初始化Uploader（可扩展其他uploader）
         db_uploader_baostock = UploaderBaoStock(db_conn=db_conn, db_config=config, db_downloader=db_downloader)
+        db_uploader_baostock._bs_login()
         # 初始化Prebuilder
         db_prebuilder_factor = PrebuilderFactor(db_conn=db_conn, db_config=config, db_downloader=db_downloader)
 
         # 计算开始日期 + 结束日期
-        update_base_info = True
-        try:
-            last_date = db_downloader._download_stock_trade_date()["datetime"].max()  # 计算目前库中最新的日期
-            start_date = datetime.strftime(datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1), "%Y-%m-%d")  # 开始日期 = 最新日期 + 1（第二天）
-        except:
-            start_date = "2000-01-01"  # 默认初始日期
-        end_date = datetime.strftime(datetime.now(), "%Y-%m-%d")  # 结束日期 = 今日
+        # update_base_info = True
+        # try:
+        #     last_date = db_downloader._download_history_trade_date()["datetime"].max()  # 计算目前库中最新的日期
+        #     start_date = datetime.strftime(datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1), "%Y-%m-%d")  # 开始日期 = 最新日期 + 1（第二天）
+        #     end_date = datetime.strftime(datetime.now(), "%Y-%m-%d")  # 结束日期 = 今日
+        # except:
+        #     start_date = "2000-01-01"  # 默认初始日期
+        #     end_date = "2024-01-01"  # 默认结束日期
+
+        # temp
+        update_base_info = False
+        start_date = "2000-01-01"
+        end_date = "2024-05-14"
 
         # 确保开始日期 <= 结束日期
         if start_date <= end_date:
@@ -77,8 +84,11 @@ if __name__ == "__main__":
             db_uploader_baostock._update_start(start_date, end_date)
             # 2. 开始更新基础特征至本地数据库
             db_prebuilder_factor._update_start(start_date, end_date)
+        else:
+            print(f"已经是最新数据啦...start: {start_date}, end: {end_date}")
 
         # 关闭数据库
+        db_uploader_baostock._bs_logout()
         db_conn.close()
     except Exception as e:
         print(f"Database main exception: {e}")

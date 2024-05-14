@@ -31,7 +31,7 @@ class UploaderBaoStock:
             df = bs.query_stock_basic().get_data()
             dd = bs.query_stock_industry().get_data()
             if not df.empty and not dd.empty:
-                dataframe = df.merge(dd[["code", "code_name", "industry"]], on=["code", "code_name"])
+                dataframe = df.merge(dd[["code", "industry"]], on=["code"], how="left")
                 dataframe = dataframe.rename(
                     columns={
                         "code": "code",
@@ -44,34 +44,40 @@ class UploaderBaoStock:
                     }
                 )
                 dataframe["industry"] = dataframe["industry"].replace("", "其他")
-                dataframe["type"] = dataframe["type"].map(lambda x: {1: "股票", 2: "指数", 3: "其它", 4: "可转债", 5: "ETF"}.get(x, "其他"))
-                dataframe["status"] = dataframe["status"].map(lambda x: {1: "上市", 2: "退市"}.get(x, "其他"))
+                dataframe["type"] = dataframe["type"].map(lambda x: {"1": "股票", "2": "指数", "3": "其它", "4": "可转债", "5": "ETF"}.get(x, "其他"))
+                dataframe["status"] = dataframe["status"].map(lambda x: {"1": "上市", "2": "退市"}.get(x, "其他"))
                 self._upload_data_to_db(dataframe, self.db_config.TABLE_ALL_STOCK_INFO, method="replace")
         except Exception as e:
             print(e)
 
     def _update_start(self, start_date, end_date):
         try:
-            self._bs_login()  # 登陆bs =============
             # 1. 获取区间内所有的stock信息
-            all_stock_set = list(sorted(self.db_downloader._download_all_stock_info()["code"].map(lambda x: x in ("sz", "sh")).unique()))
+            all_stock_info = self.db_downloader._download_all_stock_info()
+            all_stock_set = list(sorted(all_stock_info[all_stock_info["code"].str.startswith(("sh", "sz"))]["code"].unique()))
             # 2. 构建基础数据
-            history_base_df = pd.DataFrame()
-            history_indicator_df = pd.DataFrame()
-            for code in tqdm(all_stock_set):
-                history_base_df.append(self._get_history_base_info(code, start_date, end_date))
-                history_indicator_df.append(self._get_history_indicator_info(code, start_date, end_date))
+            history_base_list = []
+            history_indicator_list = []
+            for code in tqdm(all_stock_set):  # 此处运行需优化
+                stock_history_base = self._get_history_base_info(code, start_date, end_date)
+                if not stock_history_base.empty:
+                    history_base_list.append(stock_history_base)
+                stock_indicator_base = self._get_history_indicator_info(code, start_date, end_date)
+                if not stock_indicator_base.empty:
+                    history_indicator_list.append(stock_indicator_base)
             # 3. 更新基础数据
-            self._upload_data_to_db(history_base_df, self.db_config.TABLE_HISTORY_BASE_INFO)
-            self._upload_data_to_db(history_indicator_df, self.db_config.TABLE_HISTORY_INDICATOR_INFO)
+            print(f"history_base_list:: {len(history_base_list)}")
+            self._upload_data_to_db(pd.concat(history_base_list), self.db_config.TABLE_HISTORY_BASE_INFO)
+            print(f"history_indicator_list:: {len(history_indicator_list)}")
+            self._upload_data_to_db(pd.concat(history_indicator_list), self.db_config.TABLE_HISTORY_INDICATOR_INFO)
             # 4. 更新交易日历
             trade_date_df = bs.query_trade_dates(start_date=start_date, end_date=end_date).get_data()
             trade_date_list = trade_date_df[trade_date_df["is_trading_day"] == "1"]["calendar_date"].to_list()
             self._upload_data_to_db(pd.DataFrame({"datetime": trade_date_list}), self.db_config.TABLE_HISTORY_TRADE_DATE_INFO)
-
-            self._bs_logout()  # 登出bs =============
         except KeyboardInterrupt:
             sys.exit(0)
+        except Exception as e:
+            print(e)
 
     def _upload_data_to_db(self, dataframe, table_name, method="append"):
         # 插入数据库
@@ -81,7 +87,7 @@ class UploaderBaoStock:
         try:
             df = bs.query_history_k_data_plus(
                 code=code,
-                fields="code,code_name,date,open,high,low,close,volume,amount,turn",
+                fields="code,date,open,high,low,close,volume,amount,turn",
                 start_date=start_date,
                 end_date=end_date,
                 frequency="d",
@@ -91,7 +97,6 @@ class UploaderBaoStock:
                 df = df.rename(
                     columns={
                         "code": "code",
-                        "code_name": "code_name",
                         "date": "datetime",
                         "open": "open",
                         "high": "high",
@@ -113,7 +118,7 @@ class UploaderBaoStock:
         try:
             df = bs.query_history_k_data_plus(
                 code=code,
-                fields="code,code_name,date,peTTM,psTTM,pcfNcfTTM,pbMRQ",
+                fields="code,date,peTTM,psTTM,pcfNcfTTM,pbMRQ",
                 start_date=start_date,
                 end_date=end_date,
                 frequency="d",
@@ -123,7 +128,6 @@ class UploaderBaoStock:
                 df = df.rename(
                     columns={
                         "code": "code",
-                        "code_name": "code_name",
                         "date": "datetime",
                         "peTTM": "pe_ttm",
                         "psTTM": "ps_ttm",

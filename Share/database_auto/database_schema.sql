@@ -5,7 +5,6 @@ CREATE TABLE "hh_quant_history_trade_date_info" (
 
 CREATE TABLE "hh_quant_history_base_info" (
     code TEXT NOT NULL
-  , code_name TEXT NOT NULL
   , datetime DATE NOT NULL
   , open REAL
   , high REAL
@@ -19,7 +18,6 @@ CREATE TABLE "hh_quant_history_base_info" (
 
 CREATE TABLE "hh_quant_history_indicator_info" (
     code TEXT NOT NULL
-  , code_name TEXT NOT NULL
   , datetime DATE NOT NULL
   , pe_ttm REAL
   , ps_ttm REAL
@@ -29,7 +27,7 @@ CREATE TABLE "hh_quant_history_indicator_info" (
 );
 
 -- Factor相关数据表
-CREATE TABLE "hh_quant_history_factor_date_info" (
+CREATE TABLE "hh_quant_history_date_factor_info" (
     datetime DATE NOT NULL PRIMARY KEY
     , weekday INTEGER
     , day_of_week TEXT
@@ -38,9 +36,8 @@ CREATE TABLE "hh_quant_history_factor_date_info" (
     , season TEXT
 );
 
-CREATE TABLE hh_quant_history_factor_olhcv_info (
+CREATE TABLE hh_quant_history_alpha158_factor_info (
     code TEXT NOT NULL
-    , code_name TEXT NOT NULL
     , datetime DATE NOT NULL
     , KMID REAL
     , KLEN REAL
