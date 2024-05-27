@@ -81,7 +81,7 @@ if __name__ == "__main__":
             if update_base_info:
                 db_uploader_baostock._update_all_stock_info()
             # 1. 开始更新基础数据至本地数据库
-            db_uploader_baostock._update_start(start_date, end_date)
+            # db_uploader_baostock._update_start(start_date, end_date)
             # 2. 开始更新基础特征至本地数据库
             db_prebuilder_factor._update_start(start_date, end_date)
         else:

@@ -17,6 +17,8 @@ class CustomMLStrategy(BaseStrategy):
         "atr_period": 14,  # ATR计算周期
         "atr_trailing_stop_loss_factor": 1.5,  # ATR跟踪止损
         "atr_risk": 0.05,  # ATR风险系数
+        "buy_pred_upper_bound": 0.58,  # 使用模型预测打分的分布（> 0.9的quantile）进行买入过滤
+        "sell_pred_lower_bound": 0.37,  # 使用模型预测打分的分布（< 0.1的quantile）进行卖出过滤
     }
 
     def __init__(self):
@@ -30,12 +32,14 @@ class CustomMLStrategy(BaseStrategy):
 
     def get_model_prediction(self, model_prediction):
         def get_stock_for_buy(group):
-            top_n = group.nlargest(self.params.top_n, "label_pred")
-            return top_n.to_dict("records")
+            group = group[group["label_pred"] > self.params.buy_pred_upper_bound]  # 使用模型预测打分的分布（> 0.9的quantile）进行买入过滤
+            select_n = group.nlargest(self.params.top_n, "label_pred")
+            return select_n.to_dict("records")
 
         def get_stock_for_sell(group):
-            top_n = group.nsmallest(self.params.top_n, "label_pred")
-            return top_n.to_dict("records")
+            group = group[group["label_pred"] < self.params.sell_pred_lower_bound]  # 使用模型预测打分的分布（< 0.1的quantile）进行卖出过滤
+            select_n = group.nsmallest(self.params.top_n, "label_pred")
+            return select_n.to_dict("records")
 
         stock_for_buy = model_prediction.groupby("datetime").apply(get_stock_for_buy).to_dict()
         stock_for_sell = model_prediction.groupby("datetime").apply(get_stock_for_sell).to_dict()
@@ -56,15 +60,18 @@ class CustomMLStrategy(BaseStrategy):
         # 2. 检查卖出操作
         for data in self.getpositions():
             position = self.getpositionbyname(data._name)
-            holding_condition = self.holding_period.get(data._name, 0) >= self.params.min_holding_period
+            holding_condition = self.holding_period.get(data._name, 0) > self.params.min_holding_period
             if position.size > 0 and holding_condition:  # 满足持仓 + 最小持仓周期限制
                 # 2.1 模型预测卖出条件
                 sell_condition_1 = data._name in today_sell_stocks.keys()
                 # 2.2 动态跟踪止损
-                self.trailing_stop_loss[data._name] = max(
-                    self.trailing_stop_loss[data._name], data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]
-                )
-                sell_condition_2 = data.close[0] <= self.trailing_stop_loss[data._name]  # 使用跟踪止损作为卖出条件
+                temp_stop_loss = data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]
+                if temp_stop_loss > self.trailing_stop_loss[data._name]:
+                    # 更新止损线
+                    self.trailing_stop_loss[data._name] = temp_stop_loss
+                    # # 重置持仓周期
+                    # self.holding_period[data._name] -= 1
+                sell_condition_2 = data.close[0] < self.trailing_stop_loss[data._name]  # 使用跟踪止损作为卖出条件
                 # 2.3 最大持仓周期条件
                 sell_condition_3 = self.holding_period.get(data._name, 0) >= self.params.max_holding_period
                 # 3. 汇总结果
@@ -81,25 +88,24 @@ class CustomMLStrategy(BaseStrategy):
             for stock_code in today_buy_stocks.keys():
                 data = self.getdatabyname(stock_code)
                 position = self.getpositionbyname(stock_code)
-                avaiable_cash = today_avaiable_cash * today_stock_weights.get(stock_code, 0)  # 当前可用资金 * 当前stock权重占比
-                max_position_value = self.broker.get_value() * self.params.max_position_proportion  # 最大持仓价值
-                # 检测是否已经有持仓
-                if position.size > 0:
-                    # 计算当前价值
-                    max_remain_cash = max_position_value - self.broker.get_value(datas=[data])  # 如果再买同一stock的话，最多能用多少资金
-                    avaiable_cash = min(avaiable_cash, max_remain_cash)  # 选择最终可用金额
-                else:
-                    # 确保头寸不超过总资产的M%
-                    avaiable_cash = min(avaiable_cash, max_position_value)  # 选择最终可用金额
+                # 1. 今日所有可用资金 * 当前标的的权重
+                avaiable_cash_weighted = today_avaiable_cash * today_stock_weights.get(stock_code, 0)
+                # 2. 当前标的不能占到总资产的X%
+                avaiable_cash_proportion = self.broker.get_value() * self.params.max_position_proportion
+                # 3. 已有持仓的情况下，考虑最大总资产占用的情况下，还能用多少资金
+                avaiable_cash_remain = avaiable_cash_proportion - self.broker.get_value(datas=[data])
+                # 4. 计算最终可用资金
+                avaiable_cash = min(avaiable_cash_weighted, avaiable_cash_proportion, avaiable_cash_remain)
+                # 5. 买入执行
                 if avaiable_cash > self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
                     if self.atr[data][0] > 0:
                         # 计算size
-                        base_size = int(avaiable_cash / data.close[0])  # 计算可用金额下的size
-                        atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险后的size
-                        self.buy(data=data, size=min(base_size, atr_size), exectype=bt.Order.Market)  # 使用最小风险的size=min(base_size, atr_size)
+                        base_size = int(avaiable_cash / data.close[0])  # 计算当前可用资金下的买入Size
+                        atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险控制后的买入Size
+                        self.buy(data=data, size=min(base_size, atr_size), exectype=bt.Order.Market)  # 最终的买入Size = min（base_size, atr_size）
                         # 更新信息
                         self.trailing_stop_loss[stock_code] = data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]
-                        self.holding_period[stock_code] = 1  # 初始化+更新持仓周期
+                        self.holding_period[stock_code] = 1
 
         # 更新目前的持仓周期
         for k in list(self.holding_period.keys()):

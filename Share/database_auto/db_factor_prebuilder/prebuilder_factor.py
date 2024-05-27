@@ -76,16 +76,17 @@ class PrebuilderFactor:
             new_start_date = datetime.strftime(datetime.strptime(start_date, "%Y-%m-%d") - relativedelta(months=3), "%Y-%m-%d")
             all_stock_info = self.db_downloader._download_all_stock_info()
             all_stock_set = list(sorted(all_stock_info[all_stock_info["code"].str.startswith(("sh", "sz"))]["code"].unique()))
-            alpha_factor_list = []
-            for code in tqdm(all_stock_set): # 此处运行需优化
+            # alpha_factor_list = []
+            for code in tqdm(all_stock_set[1796:]):  # 此处运行需优化
                 history_base = self.db_downloader._download_history_base_info(code, new_start_date, end_date)
                 dataframe = history_base[["code", "datetime"]]
                 for alpha_name, alpha_expression in alpha_factor_dict.items():
                     dataframe[alpha_name] = self.exp_excutor.excute(history_base, alpha_expression)
                 dataframe = dataframe.replace([np.inf, -np.inf], np.nan).dropna()
                 dataframe = dataframe[(dataframe["datetime"] >= start_date) & (dataframe["datetime"] <= end_date)]
-                alpha_factor_list.append(dataframe)
-            self._upload_factor_to_db(pd.concat(alpha_factor_list), self.db_config.TABLE_HISTORY_ALPHA158_FACTOR_INFO)
+                # alpha_factor_list.append(dataframe)
+                # self._upload_factor_to_db(pd.concat(alpha_factor_list), self.db_config.TABLE_HISTORY_ALPHA158_FACTOR_INFO)
+                self._upload_factor_to_db(dataframe, self.db_config.TABLE_HISTORY_ALPHA158_FACTOR_INFO)
         except KeyboardInterrupt:
             sys.exit(0)
         except Exception as e:

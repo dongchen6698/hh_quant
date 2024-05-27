@@ -20,7 +20,7 @@ class UploaderBaoStock:
     def _bs_login(self):
         #### 登陆系统 ####
         lg = bs.login()
-        print(f"login respond error_code: {lg.error_code}, error_msg: {lg.error_msg}")
+        # print(f"login respond error_code: {lg.error_code}, error_msg: {lg.error_msg}")
 
     def _bs_logout(self):
         #### 登出系统 ####
