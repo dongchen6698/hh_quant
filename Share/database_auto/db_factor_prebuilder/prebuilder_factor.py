@@ -77,7 +77,7 @@ class PrebuilderFactor:
             all_stock_info = self.db_downloader._download_all_stock_info()
             all_stock_set = list(sorted(all_stock_info[all_stock_info["code"].str.startswith(("sh", "sz"))]["code"].unique()))
             # alpha_factor_list = []
-            for code in tqdm(all_stock_set[1796:]):  # 此处运行需优化
+            for code in tqdm(all_stock_set[5245:]):  # 此处运行需优化
                 history_base = self.db_downloader._download_history_base_info(code, new_start_date, end_date)
                 dataframe = history_base[["code", "datetime"]]
                 for alpha_name, alpha_expression in alpha_factor_dict.items():

@@ -28,8 +28,11 @@ class DownloaderBase:
         self.db_conn = db_conn
         self.db_config = db_config
 
-    def _download_all_stock_info(self):
-        query = f"select * from {self.db_config.TABLE_ALL_STOCK_INFO};"
+    def _download_all_stock_info(self, code=None):
+        if code:
+            query = f"select * from {self.db_config.TABLE_ALL_STOCK_INFO} where code = '{code}';"
+        else:
+            query = f"select * from {self.db_config.TABLE_ALL_STOCK_INFO};"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
