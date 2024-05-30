@@ -45,6 +45,10 @@ class AlphaBaseOperations:
         return series1.rolling(window=window).corr(series2)
 
     @staticmethod
+    def covariance(series1, series2, window):
+        return series1.rolling(window=window).cov(series2)
+
+    @staticmethod
     def std(series, window):
         return series.rolling(window=window).std()
 
@@ -148,6 +152,27 @@ class AlphaBaseOperations:
         weights = np.arange(1, window + 1)
         # 计算加权移动平均，每个窗口应用权重并取平均
         return series.rolling(window=window).apply(lambda x: np.dot(x, weights) / weights.sum(), raw=False)
+
+    @staticmethod
+    def tsargmax(series, window):
+        return series.rolling(window=window).apply(lambda x: np.argmax(x), raw=True)
+
+    @staticmethod
+    def signedpower(series, power):
+        return np.sign(series) * np.abs(series) ** power
+
+    @staticmethod
+    def div(series1, series2, fill_value=np.nan):
+        return series1.div(series2, fill_value=fill_value)
+
+    @staticmethod
+    def scale(series, factor=1):
+        sum_inv = factor / series.sum()
+        return series * sum_inv
+
+    @staticmethod
+    def product(series, window):
+        return series.rolling(window=window).apply(np.prod, raw=True)
 
 
 class AlphaExpressionExcutor:

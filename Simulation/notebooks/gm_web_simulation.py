@@ -1,8 +1,11 @@
 # 本示例运行于python3.6及以上版本
 from gmtrade.api import *
 
-TOKEN = "1b2af86543ef183f643910386e92435624453070"
-ACCOUNT = "6f6e4db8-1cb2-11ef-bab8-00163e022aa6"
+# TOKEN = "1b2af86543ef183f643910386e92435624453070"
+# ACCOUNT = "6f6e4db8-1cb2-11ef-bab8-00163e022aa6"
+
+TOKEN ="32b5d772278e7ae0c3145843b6d78ecd10d73c47"
+ACCOUNT="d63841c3-f5b4-11ee-bf71-00163e022aa6"
 
 # token身份认证，掘金登录后可在仿真交易官网获取
 set_token(TOKEN)
@@ -52,8 +55,9 @@ if __name__ == "__main__":
 
     # 开始交易业务
     order_volume(
-        symbol="SHSE.600000",
-        volume=10,
+        # symbol="SHSE.600000",
+        symbol="SHSE.000300",
+        volume=2000,
         side=OrderSide_Buy,
         order_type=OrderType_Market,
         position_effect=PositionEffect_Open,
