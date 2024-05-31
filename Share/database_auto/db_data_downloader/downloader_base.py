@@ -5,22 +5,7 @@ import os
 import sqlite3
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# print(sys.path)
 import database_config as database_config
-
-"""
-# 固定信息表（定期更新）
-TABLE_ALL_STOCK_INFO = "hh_quant_all_stock_info"
-
-# 数据库表映射关系
-TABLE_HISTORY_BASE_INFO = "hh_quant_history_base_info"
-TABLE_HISTORY_INDICATOR_INFO = "hh_quant_history_indicator_info"
-TABLE_HISTORY_TRADE_DATE_INFO = "hh_quant_history_trade_date_info"
-
-# Factor特征数据表关系
-TABLE_HISTORY_DATE_FACTOR_INFO = "hh_quant_history_date_factor_info"
-TABLE_HISTORY_ALPHA158_FACTOR_INFO = "hh_quant_history_alpha158_factor_info"
-"""
 
 
 class DownloaderBase:
@@ -56,18 +41,32 @@ class DownloaderBase:
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    # ======================================
-
     def _download_history_date_factor_info(self, start_date=None, end_date=None):
         if start_date and end_date:
             query = f"select * from {self.db_config.TABLE_HISTORY_DATE_FACTOR_INFO} where datetime between '{start_date}' and '{end_date}';"
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
-    def _download_history_alpha158_factor_info(self, code, start_date=None, end_date=None):
+    def _download_history_alpha184_factor_info(self, code, start_date=None, end_date=None):
         if start_date and end_date:
             query = (
-                f"select * from {self.db_config.TABLE_HISTORY_ALPHA158_FACTOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+                f"select * from {self.db_config.TABLE_HISTORY_ALPHA184_FACTOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+            )
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
+    def _download_history_alpha101_factor_info(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = (
+                f"select * from {self.db_config.TABLE_HISTORY_ALPHA101_FACTOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+            )
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
+    def _download_history_alpha191_factor_info(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = (
+                f"select * from {self.db_config.TABLE_HISTORY_ALPHA191_FACTOR_INFO} where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
             )
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe

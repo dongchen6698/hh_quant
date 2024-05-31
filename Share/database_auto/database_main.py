@@ -30,7 +30,6 @@ def init_database_schema(database_path, database_schema_path):
     with open(database_schema_path, "r") as f:
         create_table_sqls = f.read().split(";")  # 拆分每一个数据表的建表逻辑
         for create_table_sql in create_table_sqls:
-            # print(create_table_sql)
             try:
                 cursor.execute(create_table_sql)
             except Exception as e:
@@ -56,26 +55,20 @@ if __name__ == "__main__":
         db_downloader = DownloaderBase(db_conn=db_conn, db_config=config)
         # 初始化Uploader（可扩展其他uploader）
         db_uploader_baostock = UploaderBaoStock(db_conn=db_conn, db_config=config, db_downloader=db_downloader)
-        db_uploader_baostock._bs_login()
         # 初始化Prebuilder
         db_prebuilder_factor = PrebuilderFactor(db_conn=db_conn, db_config=config, db_downloader=db_downloader)
 
         # 计算开始日期 + 结束日期
-        update_base_info = False
+        update_base_info = True
         try:
             last_date = db_downloader._download_history_trade_date()["datetime"].max()  # 计算目前库中最新的日期
             start_date = datetime.strftime(datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1), "%Y-%m-%d")  # 开始日期 = 最新日期 + 1（第二天）
-            end_date = datetime.strftime(datetime.now(), "%Y-%m-%d")  # 结束日期 = 今日
         except:
             start_date = "2000-01-01"  # 默认初始日期
-            end_date = "2024-01-01"  # 默认结束日期
-
-        # temp
-        # update_base_info = False
-        # start_date = "2000-01-01"
-        # end_date = "2024-05-14"
+        end_date = datetime.strftime(datetime.now(), "%Y-%m-%d")  # 结束日期 = 今日
 
         # 确保开始日期 <= 结束日期
+        db_uploader_baostock._bs_login()
         if start_date <= end_date:
             print(f"Current Process StartDate: {start_date}, EndDate: {end_date} ...")
             if update_base_info:

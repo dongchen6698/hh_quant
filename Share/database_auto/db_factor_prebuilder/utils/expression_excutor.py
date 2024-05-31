@@ -41,7 +41,7 @@ class AlphaBaseOperations:
         return np.abs(series)
 
     @staticmethod
-    def corr(series1, series2, window):
+    def correlation(series1, series2, window):
         return series1.rolling(window=window).corr(series2)
 
     @staticmethod

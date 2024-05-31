@@ -65,36 +65,37 @@ class CustomMLStrategy(BaseStrategy):
                 # 2.1 模型预测卖出条件
                 sell_condition_1 = data._name in today_sell_stocks.keys()
                 # 2.2 动态跟踪止损
-                temp_stop_loss = data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]
-                if temp_stop_loss > self.trailing_stop_loss[data._name]:
-                    # 更新止损线
-                    self.trailing_stop_loss[data._name] = temp_stop_loss
-                    # # 重置持仓周期
-                    # self.holding_period[data._name] -= 1
                 sell_condition_2 = data.close[0] < self.trailing_stop_loss[data._name]  # 使用跟踪止损作为卖出条件
+                if not sell_condition_2:
+                    # 如果未触发止损，则更新跟踪止损线
+                    self.trailing_stop_loss[data._name] = max(
+                        self.trailing_stop_loss[data._name],  # 原始止损线
+                        data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0],  # 新止损线
+                    )
                 # 2.3 最大持仓周期条件
                 sell_condition_3 = self.holding_period.get(data._name, 0) >= self.params.max_holding_period
-                # 3. 汇总结果
+                # 3. 条件检查（触发任意卖出限制，则进行清仓处理）
                 if sell_condition_1 or sell_condition_2 or sell_condition_3:
                     self.close(data=data, exectype=bt.Order.Market)
-                    # 更新信息
+                    # 更新维护的dict信息
                     self.trailing_stop_loss.pop(data._name, None)
                     self.holding_period.pop(data._name, None)
 
         # 3. 检查买入操作
-        if len(today_buy_stocks) > 0:
+        if len(today_buy_stocks) > 0:  # 确保今天有需要买入的股票
+            # 计算需要买入股票的权重（根据模型打分进行归一）
             today_stock_weights_sum = sum([i.get("label_pred", 0) for i in today_buy_stocks.values()])
             today_stock_weights = {k: v.get("label_pred", 0) / today_stock_weights_sum for k, v in today_buy_stocks.items()}
             for stock_code in today_buy_stocks.keys():
                 data = self.getdatabyname(stock_code)
                 position = self.getpositionbyname(stock_code)
-                # 1. 今日所有可用资金 * 当前标的的权重
+                # 1. 权重金额：根据当前股票的权重 & 今日可用现金来计算当前股票的可用金额
                 avaiable_cash_weighted = today_avaiable_cash * today_stock_weights.get(stock_code, 0)
-                # 2. 当前标的不能占到总资产的X%
+                # 2. 头寸限制金额：所有股票的规模不能超过总金额的X%
                 avaiable_cash_proportion = self.broker.get_value() * self.params.max_position_proportion
-                # 3. 已有持仓的情况下，考虑最大总资产占用的情况下，还能用多少资金
+                # 3. 剩余可用金额：已有持仓的情况下，可用金额 = 头寸规模金额 - 当前占用金额
                 avaiable_cash_remain = avaiable_cash_proportion - self.broker.get_value(datas=[data])
-                # 4. 计算最终可用资金
+                # 4. 计算最终可用资金 = min（权重金额、头寸限制金额、剩余可用金额）
                 avaiable_cash = min(avaiable_cash_weighted, avaiable_cash_proportion, avaiable_cash_remain)
                 # 5. 买入执行
                 if avaiable_cash > self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
@@ -104,9 +105,9 @@ class CustomMLStrategy(BaseStrategy):
                         atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险控制后的买入Size
                         self.buy(data=data, size=min(base_size, atr_size), exectype=bt.Order.Market)  # 最终的买入Size = min（base_size, atr_size）
                         # 更新信息
-                        self.trailing_stop_loss[stock_code] = data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]
-                        self.holding_period[stock_code] = 1
+                        self.trailing_stop_loss[stock_code] = data.close[0] - self.params.atr_trailing_stop_loss_factor * self.atr[data][0]  # 初始化跟踪止损线
+                        self.holding_period[stock_code] = 1  # 初始化持仓天数
 
-        # 更新目前的持仓周期
+        # 4. 更新其他所有持仓的持仓周期+=1
         for k in list(self.holding_period.keys()):
             self.holding_period[k] += 1
