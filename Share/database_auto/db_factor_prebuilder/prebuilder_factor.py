@@ -43,6 +43,14 @@ class PrebuilderFactor:
             alpha_dict_path="./db_factor_prebuilder/factor_lib/alpha_184.json",
             db_save_path=self.db_config.TABLE_HISTORY_ALPHA184_FACTOR_INFO,
         )
+        # 2.1 更新alpha191因子库
+        # self._upload_alpha_factor(
+        #     stock_list,
+        #     start_date,
+        #     end_date,
+        #     alpha_dict_path="./db_factor_prebuilder/factor_lib/alpha_191.json",
+        #     db_save_path=self.db_config.TABLE_HISTORY_ALPHA191_FACTOR_INFO,
+        # )
         # 3. 更新其他特征
 
     def _upload_date_factor(self, start_date, end_date):
