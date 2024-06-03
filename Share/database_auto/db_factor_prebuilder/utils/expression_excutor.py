@@ -129,6 +129,10 @@ class AlphaBaseOperations:
         return pd.Series(np.where(condition, true_series, false_series), index=condition.index)
 
     @staticmethod
+    def or_operation(condition1, condition2):
+        return pd.Series(np.logical_or(condition1, condition2), index=condition1.index)
+
+    @staticmethod
     def clip(series, min_value, max_value):
         return np.clip(series, min_value, max_value)
 
@@ -156,6 +160,10 @@ class AlphaBaseOperations:
     @staticmethod
     def tsargmax(series, window):
         return series.rolling(window=window).apply(lambda x: np.argmax(x), raw=True)
+
+    @staticmethod
+    def tsargmin(series, window):
+        return series.rolling(window=window).apply(lambda x: np.argmin(x), raw=True)
 
     @staticmethod
     def signedpower(series, power):

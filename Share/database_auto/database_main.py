@@ -59,7 +59,7 @@ if __name__ == "__main__":
         db_prebuilder_factor = PrebuilderFactor(db_conn=db_conn, db_config=config, db_downloader=db_downloader)
 
         # 计算开始日期 + 结束日期
-        update_base_info = True
+        update_base_info = False
         try:
             last_date = db_downloader._download_history_trade_date()["datetime"].max()  # 计算目前库中最新的日期
             start_date = datetime.strftime(datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1), "%Y-%m-%d")  # 开始日期 = 最新日期 + 1（第二天）

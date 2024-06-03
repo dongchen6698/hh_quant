@@ -43,6 +43,14 @@ class PrebuilderFactor:
             alpha_dict_path="./db_factor_prebuilder/factor_lib/alpha_184.json",
             db_save_path=self.db_config.TABLE_HISTORY_ALPHA184_FACTOR_INFO,
         )
+        # 2.2 更新alpha101因子库
+        self._upload_alpha_factor(
+            stock_list,
+            start_date,
+            end_date,
+            alpha_dict_path="./db_factor_prebuilder/factor_lib/alpha_101.json",
+            db_save_path=self.db_config.TABLE_HISTORY_ALPHA101_FACTOR_INFO,
+        )
         # 2.1 更新alpha191因子库
         # self._upload_alpha_factor(
         #     stock_list,
@@ -94,12 +102,15 @@ class PrebuilderFactor:
             for code in tqdm(stock_list):  # 此处运行需优化
                 history_base = self.db_downloader._download_history_base_info(code, new_start_date, end_date)
                 # 计算额外的columns
-                history_base["ret"] = history_base["close"].pct_change()
                 history_base["vwap"] = history_base[["open", "high", "low", "close"]].mean(axis=1)
+                history_base["returns"] = history_base["close"].pct_change()
                 # 构建factor
                 dataframe = history_base[["code", "datetime"]]
                 for alpha_name, alpha_expression in alpha_factor_dict.items():
-                    dataframe[alpha_name] = self.exp_excutor.excute(history_base, alpha_expression)
+                    try:
+                        dataframe[alpha_name] = self.exp_excutor.excute(history_base, alpha_expression)
+                    except Exception as e:
+                        dataframe[alpha_name] = np.NaN
                 dataframe = dataframe.replace([np.inf, -np.inf], np.nan)
                 dataframe = dataframe[(dataframe["datetime"] >= start_date) & (dataframe["datetime"] <= end_date)]
                 self._upload_factor_to_db(dataframe, db_save_path)
