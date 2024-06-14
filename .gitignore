@@ -5,7 +5,9 @@
 *.log
 *.csv
 *.db
-# *.pkl
+*.pkl
+*.pickle
+*.png
 
 # 特征目录
 .venv/

@@ -85,8 +85,6 @@ class CustomMLStrategy(BaseStrategy):
         # 3. 检查买入操作
         if len(today_buy_stocks) > 0:  # 确保今天有需要买入的股票
             # 计算需要买入股票的权重（根据模型打分进行归一）
-            # self.stock_weights = [1 / math.log(i + 2) for i in range(self.params.top_n)]
-            # self.stock_weights = [w / sum(self.stock_weights) for w in self.stock_weights]  # Norm
             today_stock_weights_sum = sum([i.get("label_pred", 0) for i in today_buy_stocks.values()])
             today_stock_weights = {k: v.get("label_pred", 0) / today_stock_weights_sum for k, v in today_buy_stocks.items()}
             for stock_code in today_buy_stocks.keys():
@@ -103,12 +101,10 @@ class CustomMLStrategy(BaseStrategy):
                 # 5. 买入执行
                 if avaiable_cash > self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
                     if self.atr[data][0] > 0:
-                        # todo 计算size 
+                        # 计算size
                         base_size = int(avaiable_cash / data.close[0])  # 计算当前可用资金下的买入Size
                         atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险控制后的买入Size
-                        final_size = round(min(base_size, atr_size)/100.) * 100
-                        final_size = min(round(base_size/100.)*100, final_size)
-                        self.buy(data=data, size=final_size, exectype=bt.Order.Market)  # 最终的买入Size = min（base_size, atr_size）
+                        self.buy(data=data, size=min(base_size, atr_size), exectype=bt.Order.Market)  # 最终的买入Size = min（base_size, atr_size）
                         # 更新信息
                         self.trailing_stop_loss[stock_code] = data.low[0] - self.params.init_trailing_stop_loss_factor * self.atr[data][0]  # 初始化跟踪止损线
                         self.holding_period[stock_code] = 1  # 初始化持仓天数

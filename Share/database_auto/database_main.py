@@ -67,6 +67,9 @@ if __name__ == "__main__":
             start_date = "2000-01-01"  # 默认初始日期
         end_date = datetime.strftime(datetime.now(), "%Y-%m-%d")  # 结束日期 = 今日
 
+        start_date = "2024-06-12"
+        end_date = "2024-06-12"
+
         # 确保开始日期 <= 结束日期
         db_uploader_baostock._bs_login()
         if start_date <= end_date:
@@ -76,7 +79,7 @@ if __name__ == "__main__":
             # 1. 开始更新基础数据至本地数据库
             db_uploader_baostock._update_start(start_date, end_date)
             # 2. 开始更新基础特征至本地数据库
-            db_prebuilder_factor._update_start(start_date, end_date)
+            # db_prebuilder_factor._update_start(start_date, end_date)
         else:
             print(f"已经是最新数据啦...start: {start_date}, end: {end_date}")
 

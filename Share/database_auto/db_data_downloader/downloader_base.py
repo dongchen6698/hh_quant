@@ -55,6 +55,12 @@ class DownloaderBase:
         dataframe = pd.read_sql_query(query, self.db_conn)
         return dataframe
 
+    def _download_history_alpha184_factor_info_old_version(self, code, start_date=None, end_date=None):
+        if start_date and end_date:
+            query = f"select * from hh_quant_history_alpha158_factor_info where code = '{code}' and datetime between '{start_date}' and '{end_date}';"
+        dataframe = pd.read_sql_query(query, self.db_conn)
+        return dataframe
+
     def _download_history_alpha101_factor_info(self, code, start_date=None, end_date=None):
         if start_date and end_date:
             query = (
