@@ -185,7 +185,7 @@ class AlphaFactorGenerator:
 
         result = {}
         for index, field_expression in enumerate(fields, start=1):
-            result[f"alpha_158_{index}"] = field_expression
+            result[f"alpha_{len(fields)}_{index}"] = field_expression
 
         return result
 
