@@ -64,7 +64,8 @@ class CustomMLStrategy(BaseStrategy):
             holding_condition = self.holding_period.get(data._name, 0) > self.params.min_holding_period
             if position.size > 0 and holding_condition:  # 满足持仓 + 最小持仓周期限制
                 # 2.1 模型预测卖出条件
-                sell_condition_1 = data._name in today_sell_stocks.keys()
+                # sell_condition_1 = data._name in today_sell_stocks.keys()
+                sell_condition_1 = False
                 # 2.2 动态跟踪止损
                 sell_condition_2 = data.low[0] < self.trailing_stop_loss[data._name]  # 使用跟踪止损作为卖出条件
                 if not sell_condition_2:
@@ -86,12 +87,11 @@ class CustomMLStrategy(BaseStrategy):
         # 3. 检查买入操作
         if len(today_buy_stocks) > 0:  # 确保今天有需要买入的股票
             # 计算需要买入股票的权重（根据模型打分进行归一）
-            # self.stock_weights = [1 / math.log(i + 2) for i in range(self.params.top_n)]
-            # self.stock_weights = [w / sum(self.stock_weights) for w in self.stock_weights]  # Norm
             today_stock_weights_sum = sum([i.get("label_pred", 0) for i in today_buy_stocks.values()])
             today_stock_weights = {k: v.get("label_pred", 0) / today_stock_weights_sum for k, v in today_buy_stocks.items()}
             for stock_code in today_buy_stocks.keys():
                 data = self.getdatabyname(stock_code)
+                # print(f"symbol: {data._name}, close: {data.close[0]}, high: {data.high[0]}, low: {data.low[0]}")
                 position = self.getpositionbyname(stock_code)
                 # 1. 权重金额：根据当前股票的权重 & 今日可用现金来计算当前股票的可用金额
                 avaiable_cash_weighted = today_avaiable_cash * today_stock_weights.get(stock_code, 0)
@@ -102,13 +102,15 @@ class CustomMLStrategy(BaseStrategy):
                 # 4. 计算最终可用资金 = min（权重金额、头寸限制金额、剩余可用金额）
                 avaiable_cash = min(avaiable_cash_weighted, avaiable_cash_proportion, avaiable_cash_remain)
                 # 5. 买入执行
-                if avaiable_cash > self.params.min_buy_cash:  # 确保开仓金额不小于条件限定
-                    if self.atr[data][0] > 0:
-                        # todo 计算size
-                        base_size = int(avaiable_cash / data.close[0])  # 计算当前可用资金下的买入Size
-                        atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险控制后的买入Size
-                        final_size = round(min(base_size, atr_size) / 100.0) * 100
-                        final_size = min(round(base_size / 100.0) * 100, final_size)
+                buy_condition_1 = avaiable_cash > self.params.min_buy_cash
+                buy_condition_2 = self.atr[data][0] > 0
+                if buy_condition_1 and buy_condition_2:  # 确保开仓金额不小于条件限定
+                    # todo 计算size
+                    base_size = int(avaiable_cash / data.close[0])  # 计算当前可用资金下的买入Size
+                    atr_size = int((avaiable_cash * self.params.atr_risk) / self.atr[data][0])  # 考虑风险控制后的买入Size
+                    final_size = round(min(base_size, atr_size) / 100.0) * 100
+                    if final_size > 0:
+                        # print(f"symbol: {data._name}, today_atr:{self.atr[data][0]}, base_size: {base_size}, atr_size: {atr_size}, final_size: {final_size}")
                         self.buy(data=data, size=final_size, exectype=bt.Order.Market)  # 最终的买入Size = min（base_size, atr_size）
                         # 更新信息
                         self.trailing_stop_loss[stock_code] = data.low[0] - self.params.init_trailing_stop_loss_factor * self.atr[data][0]  # 初始化跟踪止损线

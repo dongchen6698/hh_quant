@@ -154,7 +154,7 @@ class QuantModel(tf.keras.Model):
 
         # Output........................................................................................
         final_logit = deep_logit
-        return tf.sigmoid(final_logit)
+        return tf.nn.softmax(final_logit)
 
     def get_config(self):
         config = super(QuantModel, self).get_config()
